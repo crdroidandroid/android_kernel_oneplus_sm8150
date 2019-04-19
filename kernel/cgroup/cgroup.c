@@ -5168,6 +5168,14 @@ static struct cgroup *cgroup_create(struct cgroup *parent, const char *name,
 	if (cgrp->freezer.e_freeze)
 		set_bit(CGRP_FROZEN, &cgrp->flags);
 
+	/*
+	 * New cgroup inherits effective freeze counter, and
+	 * if the parent has to be frozen, the child has too.
+	 */
+	cgrp->freezer.e_freeze = parent->freezer.e_freeze;
+	if (cgrp->freezer.e_freeze)
+		set_bit(CGRP_FROZEN, &cgrp->flags);
+
 	spin_lock_irq(&css_set_lock);
 	for (tcgrp = cgrp; tcgrp; tcgrp = cgroup_parent(tcgrp)) {
 		cgrp->ancestor_ids[tcgrp->level] = cgroup_id(tcgrp);
