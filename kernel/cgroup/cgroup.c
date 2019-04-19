@@ -4401,6 +4401,7 @@ repeat:
 			it->flags &= ~CSS_TASK_ITER_SKIPPED;
 		else
 			it->task_pos = it->task_pos->next;
+
 		if (it->task_pos == it->tasks_head) {
 			it->task_pos = it->mg_tasks_head->next;
 			it->cur_tasks_head = it->mg_tasks_head;
