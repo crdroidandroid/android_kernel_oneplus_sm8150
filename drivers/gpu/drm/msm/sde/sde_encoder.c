@@ -4675,7 +4675,7 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 	struct sde_kms *sde_kms = NULL;
 	struct sde_crtc *sde_crtc;
 	struct msm_drm_private *priv = NULL;
-	bool needs_hw_reset = false;
+	bool needs_hw_reset = false, is_cmd_mode;
 	uint32_t ln_cnt1, ln_cnt2;
 	unsigned int i;
 	int rc, ret = 0;
@@ -4773,8 +4773,11 @@ int sde_encoder_prepare_for_kickoff(struct drm_encoder *drm_enc,
 		}
 	}
 
+	is_cmd_mode = sde_encoder_check_curr_mode(drm_enc,
+				MSM_DISPLAY_CMD_MODE);
 	if (_sde_encoder_is_dsc_enabled(drm_enc) && sde_enc->cur_master &&
-			!sde_enc->cur_master->cont_splash_enabled) {
+		((is_cmd_mode && sde_enc->cur_master->cont_splash_enabled) ||
+			!sde_enc->cur_master->cont_splash_enabled)) {
 		rc = _sde_encoder_dsc_setup(sde_enc, params);
 		if (rc) {
 			SDE_ERROR_ENC(sde_enc, "failed to setup DSC: %d\n", rc);
