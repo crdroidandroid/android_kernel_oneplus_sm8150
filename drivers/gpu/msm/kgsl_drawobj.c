@@ -35,7 +35,6 @@
 #include "kgsl_sync.h"
 #include "kgsl_trace.h"
 #include "kgsl_compat.h"
-#include "../drm/msm/sde_dbg.h"
 
 /*
  * Define an kmem cache for the memobj & sparseobj structures since we
@@ -153,10 +152,6 @@ static void syncobj_timer(unsigned long data)
 		"kgsl: possible gpu syncpoint deadlock for context %u timestamp %u\n",
 		drawobj->context->id, drawobj->timestamp);
 
-	set_bit(ADRENO_CONTEXT_FENCE_LOG, &drawobj->context->priv);
-	kgsl_context_dump(drawobj->context);
-	clear_bit(ADRENO_CONTEXT_FENCE_LOG, &drawobj->context->priv);
-
 	dev_err(device->dev, "      pending events:\n");
 
 	for (i = 0; i < syncobj->numsyncs; i++) {
@@ -186,8 +181,6 @@ static void syncobj_timer(unsigned long data)
 
 	kgsl_drawobj_put(drawobj);
 	dev_err(device->dev, "--gpu syncpoint deadlock print end--\n");
-	SDE_EVT32(0x909);
-	SDE_DBG_DUMP("all");
 }
 
 /*

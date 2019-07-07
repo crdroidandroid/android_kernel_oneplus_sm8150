@@ -36,6 +36,7 @@
 #include <asm/cacheflush.h>
 #include <uapi/linux/sched/types.h>
 #include <soc/qcom/boot_stats.h>
+
 #include "kgsl.h"
 #include "kgsl_debugfs.h"
 #include "kgsl_log.h"
@@ -2413,7 +2414,6 @@ static int kgsl_setup_anon_useraddr(struct kgsl_pagetable *pagetable,
 	entry->memdesc.ops = &kgsl_usermem_ops;
 
 	if (kgsl_memdesc_use_cpu_map(&entry->memdesc)) {
-
 		/* Register the address in the database */
 		ret = kgsl_mmu_set_svm_region(pagetable,
 			(uint64_t) hostptr, (uint64_t) size);
@@ -5101,7 +5101,7 @@ int kgsl_device_platform_probe(struct kgsl_device *device)
 				PM_QOS_DEFAULT_VALUE);
 
 	device->events_wq = alloc_workqueue("kgsl-events",
-		WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS | WQ_HIGHPRI, 0);
+		WQ_UNBOUND | WQ_MEM_RECLAIM | WQ_SYSFS, 0);
 
 	/* Initialize the snapshot engine */
 	kgsl_device_snapshot_init(device);
