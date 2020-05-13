@@ -101,7 +101,7 @@ struct ramoops_platform_data {
 #ifdef OPLUS_FEATURE_DUMPDEVICE
 	unsigned long	device_info_size;
 #endif /* OPLUS_FEATURE_DUMPDEVICE */
-	int		dump_oops;
+	int		max_reason;
 	u32		flags;
 	struct persistent_ram_ecc_info ecc_info;
 };
