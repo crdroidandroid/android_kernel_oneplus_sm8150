@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2021, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -2055,8 +2055,8 @@ int msm_venc_s_ctrl(struct msm_vidc_inst *inst, struct v4l2_ctrl *ctrl)
 		break;
 	case V4L2_CID_MPEG_VIDC_VIDEO_OPERATING_RATE:
 		if (((ctrl->val >> 16) < inst->capability.frame_rate.min ||
-			 (ctrl->val >> 16) > inst->capability.frame_rate.max) &&
-			  ctrl->val != INT_MAX) {
+			(ctrl->val >> 16) > inst->capability.frame_rate.max) &&
+			ctrl->val != INT_MAX) {
 			if (!is_realtime_session(inst)) {
 				if ((ctrl->val >> 16) <
 					inst->capability.frame_rate.min) {
