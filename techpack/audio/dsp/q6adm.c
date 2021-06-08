@@ -2953,10 +2953,11 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 
 	if (perf_mode == ULL_POST_PROCESSING_PCM_MODE) {
 		flags = ADM_ULL_POST_PROCESSING_DEVICE_SESSION;
-		if ((topology == DOLBY_ADM_COPP_TOPOLOGY_ID) ||
+		if ((topology == DEFAULT_COPP_TOPOLOGY) ||
+			(topology == DOLBY_ADM_COPP_TOPOLOGY_ID) ||
 		    (topology == DS2_ADM_COPP_TOPOLOGY_ID) ||
 		    (topology == SRS_TRUMEDIA_TOPOLOGY_ID))
-			topology = DEFAULT_COPP_TOPOLOGY;
+			topology = NULL_COPP_TOPOLOGY;
 	} else if (perf_mode == ULTRA_LOW_LATENCY_PCM_MODE) {
 		flags = ADM_ULTRA_LOW_LATENCY_DEVICE_SESSION;
 		topology = NULL_COPP_TOPOLOGY;
@@ -2964,16 +2965,23 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 		bit_width = ULL_SUPPORTED_BITS_PER_SAMPLE;
 	} else if (perf_mode == LOW_LATENCY_PCM_MODE) {
 		flags = ADM_LOW_LATENCY_DEVICE_SESSION;
-		if ((topology == DOLBY_ADM_COPP_TOPOLOGY_ID) ||
+		if ((topology == DEFAULT_COPP_TOPOLOGY) ||
+			(topology == DOLBY_ADM_COPP_TOPOLOGY_ID) ||
 		    (topology == DS2_ADM_COPP_TOPOLOGY_ID) ||
 		    (topology == SRS_TRUMEDIA_TOPOLOGY_ID))
-			topology = DEFAULT_COPP_TOPOLOGY;
+			topology = NULL_COPP_TOPOLOGY;
 	} else {
 		if ((path == ADM_PATH_COMPRESSED_RX) ||
-		    (path == ADM_PATH_COMPRESSED_TX))
+		    (path == ADM_PATH_COMPRESSED_TX)) {
 			flags = 0;
-		else
+		} else {
 			flags = ADM_LEGACY_DEVICE_SESSION;
+			if ((topology == DEFAULT_COPP_TOPOLOGY) ||
+				(topology == DOLBY_ADM_COPP_TOPOLOGY_ID) ||
+				(topology == DS2_ADM_COPP_TOPOLOGY_ID) ||
+				(topology == SRS_TRUMEDIA_TOPOLOGY_ID))
+				topology = NULL_COPP_TOPOLOGY;
+		}
 	}
 
 	if ((topology == VPM_TX_SM_ECNS_V2_COPP_TOPOLOGY) ||
