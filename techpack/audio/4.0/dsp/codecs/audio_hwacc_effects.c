@@ -30,6 +30,56 @@ struct q6audio_effects {
 	struct msm_nt_eff_all_config audio_effects;
 };
 
+struct msm_ae_params {
+	uint32_t module_id;
+	uint32_t param_id;
+	uint32_t param_size;
+	int32_t *param_addr;
+	int32_t param_val;
+};
+
+static void msm_custom_audio_effects(struct q6audio_effects *effects)
+{
+	struct msm_nt_eff_all_config *msm_effects = &effects->audio_effects;
+	struct audio_client *ac = effects->ac;
+	int i, ret = 0;
+
+	struct msm_ae_params ae_data[] = {
+		/* Bass boost */
+		{ AUDPROC_MODULE_ID_BASS_BOOST, AUDPROC_PARAM_ID_BASS_BOOST_ENABLE,
+			BASS_BOOST_ENABLE_PARAM_SZ, &msm_effects->bass_boost.enable_flag, 1 },
+		{ AUDPROC_MODULE_ID_BASS_BOOST, AUDPROC_PARAM_ID_BASS_BOOST_STRENGTH,
+			BASS_BOOST_STRENGTH_PARAM_SZ, &msm_effects->bass_boost.strength, 600 },
+
+		/* Virtualizer */
+		{ AUDPROC_MODULE_ID_VIRTUALIZER, AUDPROC_PARAM_ID_VIRTUALIZER_ENABLE,
+			VIRTUALIZER_ENABLE_PARAM_SZ, &msm_effects->virtualizer.enable_flag, 1 },
+		{ AUDPROC_MODULE_ID_VIRTUALIZER, AUDPROC_PARAM_ID_VIRTUALIZER_STRENGTH,
+			VIRTUALIZER_STRENGTH_PARAM_SZ, &msm_effects->virtualizer.strength, 1000 },
+		{}
+	};
+
+	for (i = 0; i < ARRAY_SIZE(ae_data); i++) {
+		struct param_hdr_v3 param_hdr;
+
+		/* Skip if already set */
+		if (*ae_data[i].param_addr == ae_data[i].param_val)
+			continue;
+
+		param_hdr.module_id = ae_data[i].module_id;
+		param_hdr.instance_id = INSTANCE_ID_0;
+		param_hdr.param_id = ae_data[i].param_id;
+		param_hdr.param_size = ae_data[i].param_size;
+		*ae_data[i].param_addr = ae_data[i].param_val;
+
+		ret = q6asm_pack_and_set_pp_param_in_band(ac, param_hdr,
+							(u8 *) ae_data[i].param_addr);
+		if (ret < 0)
+			pr_err("%s: Send msm audio effect param failed ret=%d\n",
+				__func__, ret);
+	}
+}
+
 static void audio_effects_init_pp(struct audio_client *ac)
 {
 	int ret = 0;
@@ -120,7 +170,7 @@ static int audio_effects_shared_ioctl(struct file *file, unsigned int cmd,
 					effects->config.meta_mode_enabled,
 					effects->config.output.bits_per_sample,
 					true /*overwrite topology*/,
-					ASM_STREAM_POSTPROC_TOPO_ID_HPX_MASTER);
+					ASM_STREAM_POSTPROC_TOPO_ID_SA_PLUS);
 		if (rc < 0) {
 			pr_err("%s: Open failed for hw accelerated effects:rc=%d\n",
 				__func__, rc);
@@ -185,6 +235,12 @@ static int audio_effects_shared_ioctl(struct file *file, unsigned int cmd,
 		}
 
 		audio_effects_init_pp(effects->ac);
+		msm_custom_audio_effects(effects);
+
+		rc = msm_audio_effects_enable_extn(effects->ac, &effects->audio_effects, 1);
+		if (rc < 0)
+			pr_err("%s: Enable msm audio effect extn failed ret=%d\n",
+				__func__, rc);
 
 		rc = q6asm_run(effects->ac, 0x00, 0x00, 0x00);
 		if (!rc)
@@ -396,6 +452,8 @@ static long audio_effects_set_pp_param(struct q6audio_effects *effects,
 		pr_err("%s: Invalid effects config module\n", __func__);
 		rc = -EINVAL;
 	}
+	/* Overwrite userspace values */
+	msm_custom_audio_effects(effects);
 	return rc;
 }
 
