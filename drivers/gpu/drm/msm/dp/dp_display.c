@@ -27,6 +27,7 @@
 #include <linux/soc/qcom/max20328.h>
 #endif /* OPLUS_FEATURE_DP_MAX20328 */
 
+#include <drm/drm_client.h>
 #include "sde_connector.h"
 
 #include "msm_drv.h"
@@ -692,6 +693,10 @@ static int dp_display_send_hpd_notification(struct dp_display_private *dp)
 
 	if (!dp_display_framework_ready(dp)) {
 		pr_debug("%s: dp display framework not ready\n", __func__);
+		if (!dp->dp_display.is_bootsplash_en) {
+			dp->dp_display.is_bootsplash_en = true;
+			drm_client_dev_register(dp->dp_display.drm_dev);
+		}
 		return ret;
 	}
 
