@@ -400,7 +400,7 @@ DEFINE_EVENT(kgsl_pwrstate_template, kgsl_pwr_request_state,
 
 TRACE_EVENT(kgsl_mem_alloc,
 
-        TP_PROTO(struct kgsl_mem_entry *mem_entry),	
+	TP_PROTO(struct kgsl_mem_entry *mem_entry),
 
 	TP_ARGS(mem_entry),
 
