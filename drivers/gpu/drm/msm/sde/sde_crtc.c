@@ -5563,7 +5563,7 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 {
 	struct drm_device *dev;
 	struct sde_crtc *sde_crtc;
-	struct plane_state *pstates = NULL;
+	struct plane_state pstates[SDE_PSTATES_MAX];
 	struct sde_crtc_state *cstate;
 	struct sde_kms *kms;
 
@@ -5573,7 +5573,7 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 
 	int cnt = 0, rc = 0, mixer_width, i, z_pos, mixer_height;
 
-	struct sde_multirect_plane_states *multirect_plane = NULL;
+	struct sde_multirect_plane_states multirect_plane[SDE_MULTIRECT_PLANE_MAX];
 	int multirect_count = 0;
 	const struct drm_plane_state *pipe_staged[SSPP_MAX];
 	int left_zpos_cnt = 0, right_zpos_cnt = 0;
@@ -5605,18 +5605,6 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 		SDE_EVT32(crtc->base.id, sde_crtc->enabled, state->enable, state->active, SDE_EVTLOG_ERROR);
 		if (!sde_crtc->enabled)
 			WARN_ON(1);
-		goto end;
-	}
-
-	pstates = kcalloc(SDE_PSTATES_MAX,
-			sizeof(struct plane_state), GFP_KERNEL);
-
-	multirect_plane = kcalloc(SDE_MULTIRECT_PLANE_MAX,
-			sizeof(struct sde_multirect_plane_states),
-			GFP_KERNEL);
-
-	if (!pstates || !multirect_plane) {
-		rc = -ENOMEM;
 		goto end;
 	}
 
@@ -5869,8 +5857,6 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 	}
 
 end:
-	kfree(pstates);
-	kfree(multirect_plane);
 	_sde_crtc_rp_free_unused(&cstate->rp);
 	SDE_EVT32(crtc->base.id, sde_crtc->enabled, state->enable, state->active, SDE_EVTLOG_FUNC_EXIT);
 	return rc;
