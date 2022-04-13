@@ -241,7 +241,7 @@ static int rpm_check_suspend_allowed(struct device *dev)
 		retval = -EINVAL;
 	else if (dev->power.disable_depth > 0)
 		retval = -EACCES;
-	else if (atomic_read(&dev->power.usage_count) > 0)
+	else if (atomic_read(&dev->power.usage_count))
 		retval = -EAGAIN;
 	else if (!dev->power.ignore_children &&
 			atomic_read(&dev->power.child_count))
@@ -952,14 +952,32 @@ int pm_schedule_suspend(struct device *dev, unsigned int delay)
 }
 EXPORT_SYMBOL_GPL(pm_schedule_suspend);
 
+static int rpm_drop_usage_count(struct device *dev)
+{
+	int ret;
+
+	ret = atomic_sub_return(1, &dev->power.usage_count);
+	if (ret >= 0)
+		return ret;
+
+	/*
+	 * rpm_resume() does not check the usage counter, so restoring the
+	 * previous value here is sufficient to undo the failed decrement.
+	 */
+	atomic_inc(&dev->power.usage_count);
+	dev_warn(dev, "Runtime PM usage count underflow!\n");
+	return -EINVAL;
+}
+
 /**
  * __pm_runtime_idle - Entry point for runtime idle operations.
  * @dev: Device to send idle notification for.
  * @rpmflags: Flag bits.
  *
  * If the RPM_GET_PUT flag is set, decrement the device's usage count and
- * return immediately if it is larger than zero.  Then carry out an idle
- * notification, either synchronous or asynchronous.
+ * return immediately if it is larger than zero. If it would become negative,
+ * restore the previous value, warn, and fail the operation. Then carry out an
+ * idle notification, either synchronous or asynchronous.
  *
  * This routine may be called in atomic context if the RPM_ASYNC flag is set,
  * or if pm_runtime_irq_safe() has been called.
@@ -970,7 +988,10 @@ int __pm_runtime_idle(struct device *dev, int rpmflags)
 	int retval;
 
 	if (rpmflags & RPM_GET_PUT) {
-		if (!atomic_dec_and_test(&dev->power.usage_count))
+		retval = rpm_drop_usage_count(dev);
+		if (retval < 0)
+			return retval;
+		if (retval > 0)
 			return 0;
 	}
 
@@ -990,8 +1011,9 @@ EXPORT_SYMBOL_GPL(__pm_runtime_idle);
  * @rpmflags: Flag bits.
  *
  * If the RPM_GET_PUT flag is set, decrement the device's usage count and
- * return immediately if it is larger than zero.  Then carry out a suspend,
- * either synchronous or asynchronous.
+ * return immediately if it is larger than zero. If it would become negative,
+ * restore the previous value, warn, and fail the operation. Then carry out a
+ * suspend, either synchronous or asynchronous.
  *
  * This routine may be called in atomic context if the RPM_ASYNC flag is set,
  * or if pm_runtime_irq_safe() has been called.
@@ -1002,7 +1024,10 @@ int __pm_runtime_suspend(struct device *dev, int rpmflags)
 	int retval;
 
 	if (rpmflags & RPM_GET_PUT) {
-		if (!atomic_dec_and_test(&dev->power.usage_count))
+		retval = rpm_drop_usage_count(dev);
+		if (retval < 0)
+			return retval;
+		if (retval > 0)
 			return 0;
 	}
 
@@ -1345,13 +1370,18 @@ EXPORT_SYMBOL_GPL(pm_runtime_forbid);
  */
 void pm_runtime_allow(struct device *dev)
 {
+	int ret;
+
 	spin_lock_irq(&dev->power.lock);
 	if (dev->power.runtime_auto)
 		goto out;
 
 	dev->power.runtime_auto = true;
-	if (atomic_dec_and_test(&dev->power.usage_count))
+	ret = rpm_drop_usage_count(dev);
+	if (ret == 0)
 		rpm_idle(dev, RPM_AUTO | RPM_ASYNC);
+	else if (ret > 0)
+		goto out;
 
  out:
 	spin_unlock_irq(&dev->power.lock);
