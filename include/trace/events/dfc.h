@@ -313,6 +313,24 @@ TRACE_EVENT(dfc_watchdog,
 		__entry->mux_id, __entry->bearer_id, __entry->event)
 );
 
+TRACE_EVENT(dfc_set_powersave_mode,
+
+	TP_PROTO(int enable),
+
+	TP_ARGS(enable),
+
+	TP_STRUCT__entry(
+		__field(int, enable)
+	),
+
+	TP_fast_assign(
+		__entry->enable = enable;
+	),
+
+	TP_printk("set powersave mode to %s",
+		__entry->enable ? "enable" : "disable")
+);
+
 #endif /* _TRACE_DFC_H */
 
 /* This part must be outside protection */
