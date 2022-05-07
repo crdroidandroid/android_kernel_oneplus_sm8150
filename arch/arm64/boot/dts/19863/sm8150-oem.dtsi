@@ -883,12 +883,11 @@ tp_irq_active: tp_irq_active {
 	ramoops: ramoops@0xA9800000 {
 		compatible = "ramoops";
 		reg = <0 0xA9800000 0 0x00400000>;
-		record-size =  <0x40000>; //256x1024
-		console-size = <0x40000>;
-		ftrace-size =  <0x40000>;
-		pmsg-size=	   <0x200000>;
 		devinfo-size=  <0x01000>;
-		ecc-size=	   <0x0>;
+		record-size = <0x200000>;
+		pmsg-size = <0x200000>;
+		ecc-size = <16>;
+		max-reason = <4>;
 	};
 
 	mtp_mem: mtp_mem@ac300000 {
