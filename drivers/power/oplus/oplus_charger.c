@@ -11,6 +11,7 @@
 * Revision 1.0        2015-06-22        Fanhong.Kong@ProDrv.CHG        Created for new architecture
 * Revision 2.0        2018-04-14        Fanhong.Kong@ProDrv.CHG        Upgrade for SVOOC
 ***********************************************************************************/
+
 #include <linux/delay.h>
 #include <linux/power_supply.h>
 #include <linux/proc_fs.h>
@@ -105,7 +106,7 @@ extern bool oplus_is_power_off_charging(struct oplus_vooc_chip *chip);
 #define charger_xlog_printk(num, fmt, ...) \
 		do { \
 			if (enable_charger_log >= (int)num) { \
-				printk(KERN_NOTICE pr_fmt("[OPLUS_CHG][%s]"fmt), __func__, ##__VA_ARGS__); \
+				printk(KERN_NOTICE pr_fmt("[OPLUS_CHG][%s:%d]"fmt), __func__, __LINE__, ##__VA_ARGS__); \
 			} \
 		} while (0)
 
