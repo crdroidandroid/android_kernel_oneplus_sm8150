@@ -98,10 +98,11 @@ int cpupri_find(struct cpupri *cp, struct task_struct *p,
 {
 	int idx = 0;
 	int task_pri = convert_prio(p->prio);
-	bool drop_nopreempts = task_pri <= MAX_RT_PRIO;
+	bool drop_nopreempts = task_pri <= MAX_RT_PRIO + 1;
 #ifdef OPLUS_FEATURE_SCHED_ASSIST
 	bool drop_uxtasks = sysctl_sched_assist_enabled;
 #endif /* OPLUS_FEATURE_SCHED_ASSIST */
+
 	BUG_ON(task_pri >= CPUPRI_NR_PRIORITIES);
 
 retry:
