@@ -743,15 +743,6 @@
 			label = "cont_splash_region";
 		};
 
-		disp_rdump_memory: disp_rdump_region {
-			//ifdef OPLUS_FEATURE_SECURITY_COMMON
-			//reg = <0x0 0x9c000000 0x0 0x02400000>;
-			//#else
-			reg = <0x0 0x9d000000 0x0 0x02400000>;
-			//#endif /* OPLUS_FEATURE_SECURITY_COMMON */
-			label = "disp_rdump_region";
-		};
-
 		adsp_mem: adsp_region {
 			compatible = "shared-dma-pool";
 			alloc-ranges = <0x0 0x00000000 0x0 0xffffffff>;
