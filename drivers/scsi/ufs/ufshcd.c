@@ -3908,7 +3908,7 @@ send_orig_cmd:
 
 	err = ufshcd_prepare_lrbp_crypto(hba, cmd, lrbp);
 	if (err) {
-		ufshcd_release(hba);
+		ufshcd_release(hba, false);
 		lrbp->cmd = NULL;
 		clear_bit_unlock(tag, &hba->lrb_in_use);
 		goto out;
@@ -3931,7 +3931,7 @@ send_orig_cmd:
 
 	err = ufshcd_map_sg(hba, lrbp);
 	if (err) {
-		ufshcd_release(hba);
+		ufshcd_release(hba, false);
 		lrbp->cmd = NULL;
 		clear_bit_unlock(tag, &hba->lrb_in_use);
 		ufshcd_release_all(hba);
@@ -6268,17 +6268,8 @@ static int ufshcd_change_queue_depth(struct scsi_device *sdev, int depth)
 static int ufshcd_slave_configure(struct scsi_device *sdev)
 {
 	struct ufs_hba *hba = shost_priv(sdev->host);
-#if defined(VENDOR_EDIT) && defined(CONFIG_UFSFEATURE)
-	struct ufsf_feature *ufsf = &hba->ufsf;
 	struct request_queue *q = sdev->request_queue;
 
-	if (ufsf_is_valid_lun(sdev->lun)) {
-		ufsf->sdev_ufs_lu[sdev->lun] = sdev;
-		ufsf->slave_conf_cnt++;
-		printk(KERN_ERR "%s: ufsfeature set lun %d sdev %p q %p\n",
-		       __func__, (int)sdev->lun, sdev, sdev->request_queue);
-	}
-#endif
 	blk_queue_update_dma_pad(q, PRDT_DATA_BYTE_COUNT_PAD - 1);
 	blk_queue_max_segment_size(q, PRDT_DATA_BYTE_COUNT_MAX);
 
@@ -6613,7 +6604,6 @@ static void __ufshcd_transfer_req_compl(struct ufs_hba *hba,
 			if (req) {
 #ifdef VENDOR_EDIT
             	cmd->request->flash_io_latency = ktime_us_delta(ktime_get(), cmd->request->ufs_io_start);
-#endif
 				/* Update IO svc time latency histogram */
 				if (req->lat_hist_enabled) {
 				    ktime_t completion;
@@ -6632,7 +6622,6 @@ static void __ufshcd_transfer_req_compl(struct ufs_hba *hba,
                 }
             }
 #endif
-#if defined(VENDOR_EDIT) && defined(CONFIG_TRACEPOINTS)
             if (trace_ufshcd_command_enabled())
             {
                 struct request *req = cmd->request;
@@ -6646,8 +6635,6 @@ static void __ufshcd_transfer_req_compl(struct ufs_hba *hba,
                             cmd->sdb.length);
                 }
             }
-
-
 			/* Do not touch lrbp after scsi done */
 			cmd->scsi_done(cmd);
 		} else if (lrbp->command_type == UTP_CMD_TYPE_DEV_MANAGE ||
@@ -11283,7 +11270,7 @@ void ufshcd_remove(struct ufs_hba *hba)
 	ufsf_hpb_release(&hba->ufsf);
 	ufsf_tw_release(&hba->ufsf);
 #endif
-	ufs_sysfs_remove_nodes(hba->dev);
+	ufshcd_remove_sysfs_nodes(hba);
 	scsi_remove_host(hba->host);
 	/* disable interrupts */
 	ufshcd_disable_intr(hba, hba->intr_mask);

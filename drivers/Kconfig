@@ -105,11 +105,7 @@ source "drivers/usb/Kconfig"
 
 source "drivers/uwb/Kconfig"
 
-#ifdef VENDOR_EDIT
-source "drivers/ommc/Kconfig"
-#else
-#source "drivers/mmc/Kconfig"
-#endif
+source "drivers/mmc/Kconfig"
 
 source "drivers/memstick/Kconfig"
 
