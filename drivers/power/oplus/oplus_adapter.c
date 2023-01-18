@@ -20,21 +20,9 @@
 #include "oplus_gauge.h"
 #include "oplus_adapter.h"
 
-
-
 extern int enable_charger_log;
-#define adapter_xlog_printk(num, fmt, ...) \
-        do { \
-                if (enable_charger_log >= (int)num) { \
-                        printk(KERN_NOTICE pr_fmt("[OPLUS_CHG][%s]"fmt), __func__, ##__VA_ARGS__);\
-        } \
-} while (0)
-
 
 static struct oplus_adapter_chip *g_adapter_chip = NULL;
-
-
-
 
 static void oplus_adpater_awake_init(struct oplus_adapter_chip *chip)
 {
@@ -91,7 +79,7 @@ static void adapter_update_work_func(struct work_struct *work)
 		tx_gpio = oplus_vooc_get_uart_tx();
 		rx_gpio = oplus_vooc_get_uart_rx();
 		
-        adapter_xlog_printk(CHG_LOG_CRTI, " begin\n");
+        pr_debug(" begin\n");
 		oplus_vooc_uart_init();
 		
         for (i = 0;i < 2;i++) {
@@ -120,7 +108,7 @@ static void adapter_update_work_func(struct work_struct *work)
 				oplus_vooc_set_adapter_update_report_status(ADAPTER_FW_UPDATE_SUCCESS);
         }
         oplus_vooc_battery_update();
-        adapter_xlog_printk(CHG_LOG_CRTI, "  end update_result:%d\n", update_result);
+        pr_debug("  end update_result:%d\n", update_result);
         oplus_adapter_set_awake(chip, false);
 }
 
@@ -128,7 +116,7 @@ static void adapter_update_work_func(struct work_struct *work)
 void oplus_adapter_fw_update(void)
 {
         struct oplus_adapter_chip *chip = g_adapter_chip ;
-		adapter_xlog_printk(CHG_LOG_CRTI, " call \n");
+		pr_debug(" call \n");
         /*schedule_delayed_work_on(7, &chip->adapter_update_work, */
         /*                        round_jiffies_relative(msecs_to_jiffies(ADAPTER_UPDATE_DELAY)));*/
         schedule_delayed_work(&chip->adapter_update_work,

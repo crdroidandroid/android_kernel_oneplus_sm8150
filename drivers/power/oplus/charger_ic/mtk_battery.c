@@ -6345,8 +6345,8 @@ psy_reg_failed:
 		power_supply_unregister(chip->usb_psy);
     if (chip->batt_psy)
         power_supply_unregister(chip->batt_psy);
-    
-    charger_xlog_printk(CHG_LOG_CRTI, " Failed\n");
+
+    pr_debug(" Failed\n");
     return rc;    
 #endif	
 }
