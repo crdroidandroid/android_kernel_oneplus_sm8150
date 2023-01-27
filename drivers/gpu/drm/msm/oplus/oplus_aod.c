@@ -15,7 +15,7 @@
 #include "oplus_aod.h"
 #include <drm/drm_mipi_dsi.h>
 
-int aod_light_mode = 0;
+int aod_light_mode = 1;
 DEFINE_MUTEX(oplus_aod_light_mode_lock);
 
 int __oplus_display_set_aod_light_mode(int mode) {
