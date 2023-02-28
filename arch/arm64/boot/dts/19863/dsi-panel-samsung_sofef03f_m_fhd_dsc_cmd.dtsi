@@ -131,7 +131,7 @@
 						];
 
 					qcom,mdss-dsi-timing-switch-command = [
-						/* 60hz �?90hz Transition */
+						/* 60hz â?90hz Transition */
 						39 01 00 00 00 00 03 F0 5A 5A
 						39 01 00 00 00 00 02 60 00				/* 0x00 : 60 Hz */
 						39 01 00 00 00 00 03 F0 A5 A5
@@ -206,7 +206,7 @@
 						39 01 00 00 00 00 03 FC A5 A5
 						/* Brightness Control */
 						39 01 00 00 00 00 02 53 20				/* 0x20 Normal transition */
-						/* 60hz �?90hz Transition */
+						/* 60hz â?90hz Transition */
 						39 01 00 00 00 00 03 F0 5A 5A
 						39 01 00 00 00 00 02 60 00				/* 0x00 : 60 Hz */
 						39 01 00 00 3C 00 03 F0 A5 A5
@@ -281,7 +281,6 @@
 					qcom,mdss-dsi-hbm-backlight-off-command = [
 						/* HBM Mode OFF */
 						39 00 00 00 00 00 02 53 20
-						39 01 00 00 11 00 03 51 03 FF
 						39 00 00 00 00 00 03 F0 5A 5A
 						39 00 00 00 00 00 02 B0 BB
 						39 00 00 00 00 00 02 BA F7
@@ -410,20 +409,10 @@
 						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-aod-low-mode-command = [
-						/* 10nit */
-						15 01 00 00 21 00 01 28
-						39 01 00 00 00 00 03 F0 5A 5A
-						39 01 00 00 00 00 02 B0 0A			/* FD setmode AOD */
-						39 01 00 00 00 00 02 D5 06			/* FD setmode AOD */
-						39 01 00 00 00 00 02 EE 00			/* D-IC supply */
-						39 01 00 00 00 00 02 60 00			/* 60Hz */
-						39 01 00 00 00 00 02 53 23			/* 10nit */
-						39 01 00 00 00 00 03 F0 A5 A5
-						05 01 00 00 00 00 01 29
+						15 01 00 00 00 00 02 53 23			/* 10nit */
 					];
 					qcom,mdss-dsi-aod-high-mode-command = [
-						/* 50nit */
-						15 01 00 00 00 00 02 53 22
+						15 01 00 00 00 00 02 53 22			/* 50nit */
 					];
 					qcom,mdss-dsi-panel-aod-off-command = [
 						/* 60 Hz */
@@ -437,27 +426,22 @@
 						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-lp1-command = [
-						/* 50nit */
+						/* 10nit */
 						15 01 00 00 21 00 01 28
 						39 01 00 00 00 00 03 F0 5A 5A
 						39 01 00 00 00 00 02 B0 0A			/* FD setmode AOD */
 						39 01 00 00 00 00 02 D5 06			/* FD setmode AOD */
 						39 01 00 00 00 00 02 EE 00			/* D-IC supply */
 						39 01 00 00 00 00 02 60 00			/* 60Hz */
-						39 01 00 00 00 00 02 53 22			/* 50nit */
+						39 01 00 00 00 00 02 53 23			/* 10nit */
 						39 01 00 00 00 00 03 F0 A5 A5
 						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-nolp-command = [
-						/* 60 Hz */
-						15 01 00 00 21 00 01 28
+						/* HBM Mode OFF */
 						39 01 00 00 00 00 03 F0 5A 5A
-						39 01 00 00 00 00 02 B0 0A			/* Fd Setting Normal*/
-						39 01 00 00 00 00 02 D5 05			/* Fd Setting Normal*/
-						39 01 00 00 00 00 02 60 00
-						39 01 00 00 00 00 02 53 20
+						39 01 00 00 00 00 02 53 20				/* 0x20 Normal transition */
 						39 01 00 00 00 00 03 F0 A5 A5
-						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-panel-aod-off-samsung-command = [
 						/* 60 Hz */
@@ -754,7 +738,7 @@
 						];
 
 					qcom,mdss-dsi-timing-switch-command = [
-						/* 60hz �?90hz Transition */
+						/* 60hz â?90hz Transition */
 						39 01 00 00 00 00 03 F0 5A 5A
 						39 01 00 00 00 00 02 60 10				/* 0x10 : 90 Hz */
 						39 01 00 00 00 00 03 F0 A5 A5
@@ -829,7 +813,7 @@
 						39 01 00 00 00 00 03 FC A5 A5
 						/* Brightness Control */
 						39 01 00 00 00 00 02 53 20				/* 0x20 Normal transition */
-						/* 60hz �?90hz Transition */
+						/* 60hz â?90hz Transition */
 						39 01 00 00 00 00 03 F0 5A 5A
 						39 01 00 00 00 00 02 60 10				/* 0x10 : 90 Hz */
 						39 01 00 00 3C 00 03 F0 A5 A5
@@ -904,7 +888,6 @@
 					qcom,mdss-dsi-hbm-backlight-off-command = [
 						/* HBM Mode OFF */
 						39 00 00 00 00 00 02 53 20
-						39 01 00 00 0C 00 03 51 03 FF
 						39 00 00 00 00 00 03 F0 5A 5A
 						39 00 00 00 00 00 02 B0 BB
 						39 00 00 00 00 00 02 BA F7
@@ -1033,20 +1016,10 @@
 						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-aod-low-mode-command = [
-						/* 10nit */
-						15 01 00 00 21 00 01 28
-						39 01 00 00 00 00 03 F0 5A 5A
-						39 01 00 00 00 00 02 B0 0A			/* FD setmode AOD */
-						39 01 00 00 00 00 02 D5 06			/* FD setmode AOD */
-						39 01 00 00 00 00 02 EE 00			/* D-IC supply */
-						39 01 00 00 00 00 02 60 10			/* 90Hz */
-						39 01 00 00 00 00 02 53 23			/* 10nit */
-						39 01 00 00 00 00 03 F0 A5 A5
-						05 01 00 00 00 00 01 29
+						15 01 00 00 00 00 02 53 23			/* 10nit */
 					];
 					qcom,mdss-dsi-aod-high-mode-command = [
-						/* 50nit */
-						15 01 00 00 00 00 02 53 22
+						15 01 00 00 00 00 02 53 22			/* 50nit */
 					];
 					qcom,mdss-dsi-panel-aod-off-command = [
 						/* 90Hz */
@@ -1060,27 +1033,22 @@
 						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-lp1-command= [
-						/* 50nit */
+						/* 10nit */
 						15 01 00 00 21 00 01 28
 						39 01 00 00 00 00 03 F0 5A 5A
 						39 01 00 00 00 00 02 B0 0A			/* FD setmode AOD */
 						39 01 00 00 00 00 02 D5 06			/* FD setmode AOD */
 						39 01 00 00 00 00 02 EE 00			/* D-IC supply */
 						39 01 00 00 00 00 02 60 10			/* 90Hz */
-						39 01 00 00 00 00 02 53 22			/* 50nit */
+						39 01 00 00 00 00 02 53 23			/* 10nit */
 						39 01 00 00 00 00 03 F0 A5 A5
 						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-nolp-command = [
-						/* 90Hz */
-						15 01 00 00 21 00 01 28
+						/* HBM Mode OFF */
 						39 01 00 00 00 00 03 F0 5A 5A
-						39 01 00 00 00 00 02 B0 0A			/* Fd Setting Normal*/
-						39 01 00 00 00 00 02 D5 05			/* Fd Setting Normal*/
-						39 01 00 00 00 00 02 60 10
-						39 01 00 00 00 00 02 53 20
+						39 01 00 00 00 00 02 53 20				/* 0x20 Normal transition */
 						39 01 00 00 00 00 03 F0 A5 A5
-						05 01 00 00 00 00 01 29
 					];
 					qcom,mdss-dsi-panel-aod-off-samsung-command = [
 						/* 90Hz */
@@ -1348,54 +1316,26 @@
 	qcom,err-flag-gpio = <&tlmm 114 0>;
 	oplus,mdss-dsi-vendor-name = "SOFEF03F";
 	oplus,mdss-dsi-manufacture = "samsung";
-	qcom,mdss-dsi-dc-backlight-level = <520>;
 	oplus,dsi-fod-brightness = <0 0xff>,
-				<2 0xef>,
-				<4 0xEA>,
-				<6 0xE9>,
-				<8 0xE5>,
-				<10 0xE3>,
-				<20 0xE0>,
-				<40 0xD8>,
-				<60 0xD0>,
-				<90 0xCD>,
-				<140 0xC5>,
-				<200 0xB9>,
-				<300 0xAE>,
-				<450 0x9F>,
-				<600 0x93>,
-				<800 0x7A>,
-				<1000 0x67>,
-				<1200 0x52>,
-				<1400 0x49>,
-				<1600 0x3C>,
-				<1800 0x2F>,
-				<2047 0x1E>;
-
-	oplus,dsi-dc-brightness = <0 0xFF>,
-				<1 0xFE>,
-				<2 0xFC>,
-				<3 0xFB>,
-				<4 0xF9>,
-				<5 0xF9>,
-				<8 0xF6>,
-				<10 0xF5>,
-				<15 0xF3>,
-				<20 0xF2>,
-				<30 0xEF>,
-				<40 0xEA>,
-				<60 0xE0>,
-				<80 0xD3>,
-				<110 0xC4>,
-				<140 0xB4>,
-				<170 0xA6>,
-				<210 0x98>,
-				<250 0x83>,
-				<300 0x66>,
-				<350 0x4A>,
-				<400 0x32>,
-				<460 0x12>,
-				<520 0x00>;
+				<1 0xf1>,
+				<2 236>,
+				<3 234>,
+				<4 232>,
+				<6 230>,
+				<10 225>,
+				<20 215>,
+				<30 208>,
+				<45 197>,
+				<70 184>,
+				<100 175>,
+				<150 160>,
+				<227 142>,
+				<300 128>,
+				<400 115>,
+				<500 100>,
+				<600 82>,
+				<800 66>,
+				<1023 30>;
 };
 
 &soc {
