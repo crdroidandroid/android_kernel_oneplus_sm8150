@@ -14,7 +14,7 @@ config OPLUS_CHARGER_MTK
 config OPLUS_SHORT_C_BATT_CHECK
 	bool "OPLUS batt short "
 	help
-	  Say Y here to declare OPLUS batt short	  
+	  Say Y here to declare OPLUS batt short
 
 config OPLUS_STANDARD_BATTERY_CHECK_ADC
 	bool "OPLUS Official Standard Battery check by ADC"
