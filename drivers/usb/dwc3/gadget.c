@@ -2526,6 +2526,8 @@ static int __dwc3_gadget_start(struct dwc3 *dwc)
 	 */
 	reg = dwc3_readl(dwc->regs, DWC3_GRXTHRCFG);
 	reg &= ~DWC3_GRXTHRCFG_PKTCNTSEL;
+	if (!dwc3_is_usb3(dwc))
+		reg &= ~DWC31_GRXTHRCFG_PKTCNTSEL;
 	dwc3_writel(dwc->regs, DWC3_GRXTHRCFG, reg);
 
 	/*
