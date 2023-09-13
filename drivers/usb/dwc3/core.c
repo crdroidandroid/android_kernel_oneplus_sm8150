@@ -263,12 +263,58 @@ generic_phy_init:
 	}
 
 	/*
-	 * We're resetting only the device side because, if we're in host mode,
-	 * XHCI driver will reset the host block. If dwc3 was configured for
-	 * host-only mode, then we can return early.
+	 * We're resetting only the device side because, if we're already in
+	 * host mode, xHCI will reset the host block. If we're configured for
+	 * host-only mode but the host path has not been initialized yet, make
+	 * sure the PHYs are ready before the controller updates port capability
+	 * or other host-side settings by asserting the PHY soft-reset bits.
 	 */
-	if (dwc->dr_mode == USB_DR_MODE_HOST)
+	if (dwc->current_dr_role == DWC3_GCTL_PRTCAP_HOST)
 		return 0;
+
+	if (dwc->dr_mode == USB_DR_MODE_HOST) {
+		u32 usb3_port0;
+		u32 usb2_port0;
+		u32 usb3_port1 = 0;
+		u32 usb2_port1 = 0;
+
+		usb3_port0 = dwc3_readl(dwc->regs, DWC3_GUSB3PIPECTL(0));
+		usb3_port0 |= DWC3_GUSB3PIPECTL_PHYSOFTRST;
+		dwc3_writel(dwc->regs, DWC3_GUSB3PIPECTL(0), usb3_port0);
+
+		usb2_port0 = dwc3_readl(dwc->regs, DWC3_GUSB2PHYCFG(0));
+		usb2_port0 |= DWC3_GUSB2PHYCFG_PHYSOFTRST;
+		dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(0), usb2_port0);
+
+		if (dwc->dual_port) {
+			usb3_port1 = dwc3_readl(dwc->regs, DWC3_GUSB3PIPECTL(1));
+			usb3_port1 |= DWC3_GUSB3PIPECTL_PHYSOFTRST;
+			dwc3_writel(dwc->regs, DWC3_GUSB3PIPECTL(1), usb3_port1);
+
+			usb2_port1 = dwc3_readl(dwc->regs, DWC3_GUSB2PHYCFG(1));
+			usb2_port1 |= DWC3_GUSB2PHYCFG_PHYSOFTRST;
+			dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(1), usb2_port1);
+		}
+
+		usleep_range(1000, 2000);
+
+		usb3_port0 &= ~DWC3_GUSB3PIPECTL_PHYSOFTRST;
+		dwc3_writel(dwc->regs, DWC3_GUSB3PIPECTL(0), usb3_port0);
+
+		usb2_port0 &= ~DWC3_GUSB2PHYCFG_PHYSOFTRST;
+		dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(0), usb2_port0);
+
+		if (dwc->dual_port) {
+			usb3_port1 &= ~DWC3_GUSB3PIPECTL_PHYSOFTRST;
+			dwc3_writel(dwc->regs, DWC3_GUSB3PIPECTL(1), usb3_port1);
+
+			usb2_port1 &= ~DWC3_GUSB2PHYCFG_PHYSOFTRST;
+			dwc3_writel(dwc->regs, DWC3_GUSB2PHYCFG(1), usb2_port1);
+		}
+
+		msleep(50);
+		return 0;
+	}
 
 	reg = dwc3_readl(dwc->regs, DWC3_DCTL);
 	reg |= DWC3_DCTL_CSFTRST;
