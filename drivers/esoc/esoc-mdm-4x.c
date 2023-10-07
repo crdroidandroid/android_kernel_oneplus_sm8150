@@ -388,7 +388,9 @@ static void mdm_get_restart_reason(struct work_struct *work)
 		if (!ret) {
 			esoc_mdm_log("restart reason is %s\n", sfr_buf);
 			dev_err(dev, "mdm restart reason is %s\n", sfr_buf);
+#ifdef OPLUS_FEATURE_MODEM_MINIDUMP
 			__subsystem_send_uevent(dev, sfr_buf);
+#endif /*OPLUS_FEATURE_MODEM_MINIDUMP*/
 			break;
 		}
 		msleep(SFR_RETRY_INTERVAL);
