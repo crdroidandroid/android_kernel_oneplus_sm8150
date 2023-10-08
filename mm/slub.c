@@ -1480,12 +1480,12 @@ unsigned long kmem_cache_flags(unsigned long object_size,
 }
 #endif
 #else /* !CONFIG_SLUB_DEBUG */
+static inline void setup_page_debug(struct kmem_cache *s,
+			void *addr, int order) {}
 #ifdef OPLUS_FEATURE_MEMLEAK_DETECT
 #ifndef CONFIG_KMALLOC_DEBUG
 static inline void setup_object_debug(struct kmem_cache *s,
 			struct page *page, void *object) {}
-static inline void setup_page_debug(struct kmem_cache *s,
-			void *addr, int order) {}
 
 static inline int alloc_debug_processing(struct kmem_cache *s,
 	struct page *page, void *object, unsigned long addr) { return 0; }
