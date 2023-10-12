@@ -968,8 +968,6 @@ int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 			|| !strcmp(cmd_set_prop_map[type], "qcom,mdss-dsi-hbm-off-command")){    /*Without this in high brightness env, unlocking using FOD*/
 			flag_writ = 3;                          /*will turn off HBM. But HBM should remain on during high brightness env*/
 		pr_err("dsi_cmd %s\n", cmd_set_prop_map[type]);
-	} else {
-		pr_err("dsi_cmd %s\n", cmd_set_prop_map[type]);
 	}
 
 	if (oplus_seed_backlight) {
