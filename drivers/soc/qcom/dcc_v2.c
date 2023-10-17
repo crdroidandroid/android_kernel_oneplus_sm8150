@@ -1852,9 +1852,8 @@ static int dcc_probe(struct platform_device *pdev)
 	md_entry.virt_addr = (uintptr_t)drvdata->ram_base;
 	md_entry.phys_addr = res->start;
 	md_entry.size = drvdata->ram_size;
-	md_entry.id = 0;
 	if (msm_minidump_add_region(&md_entry))
-	dev_err(drvdata->dev, "Failed to add DCC data in Minidump\n");
+		dev_err(drvdata->dev, "Failed to add DCC data in Minidump\n");
 
 	return 0;
 err:
