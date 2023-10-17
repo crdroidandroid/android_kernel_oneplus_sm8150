@@ -36,10 +36,6 @@
 #include <soc/qcom/restart.h>
 #include <soc/qcom/watchdog.h>
 #include <soc/qcom/minidump.h>
-#ifdef CONFIG_OPLUS_FEATURE_QCOM_MINIDUMP_ENHANCE
-#include <soc/oplus/system/oplus_project.h>
-#include <soc/oplus/system/qcom_minidump_enhance.h>
-#endif
 
 #define EMERGENCY_DLOAD_MAGIC1    0x322A4F99
 #define EMERGENCY_DLOAD_MAGIC2    0xC67E4350
@@ -97,15 +93,7 @@ static struct notifier_block panic_blk = {
 
 static struct kobject dload_kobj;
 static struct kobject dload_kobj;
-#ifndef CONFIG_OPLUS_FEATURE_QCOM_MINIDUMP_ENHANCE
 static int dload_type = SCM_DLOAD_FULLDUMP;
-#else
-#if defined(CONFIG_OPLUS_DEBUG_BUILD)
-int dload_type = SCM_DLOAD_FULLDUMP;
-#else
-int dload_type = SCM_DLOAD_MINIDUMP;
-#endif
-#endif
 static void *dload_mode_addr;
 static void *dload_type_addr;
 static bool dload_mode_enabled;
@@ -215,13 +203,6 @@ static void set_dload_mode(int on)
 	ret = scm_set_dload_mode(on ? dload_type : 0, 0);
 	if (ret)
 		pr_err("Failed to set secure DLOAD mode: %d\n", ret);
-
-#ifdef CONFIG_OPLUS_FEATURE_QCOM_MINIDUMP_ENHANCE
-	if(dload_type == SCM_DLOAD_MINIDUMP)
-		__raw_writel(EMMC_DLOAD_TYPE, dload_type_addr);
-	else
-		__raw_writel(0, dload_type_addr);
-#endif /* CONFIG_OPLUS_FEATURE_QCOM_MINIDUMP_ENHANCE */
 
 	dload_mode_enabled = on;
 }
@@ -742,17 +723,6 @@ static int msm_restart_probe(struct platform_device *pdev)
 	struct resource *mem;
 	struct device_node *np;
 	int ret = 0;
-	
-#ifdef CONFIG_OPLUS_FEATURE_QCOM_MINIDUMP_ENHANCE
-#ifdef CONFIG_OPLUS_USER_BUILD
-	if (get_eng_version() == AGING)
-		dload_type = SCM_DLOAD_FULLDUMP;
-	else
-		dload_type = SCM_DLOAD_MINIDUMP;
-#else
-		dload_type = SCM_DLOAD_FULLDUMP;
-#endif
-#endif
 
 	atomic_notifier_chain_register(&panic_notifier_list, &panic_blk);
 
