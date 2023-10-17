@@ -16,7 +16,6 @@ obj-$(CONFIG_OPLUS_FEATURE_PHOENIX)     += oplus_phoenix/
 obj-$(CONFIG_OPLUS_FEATURE_PMIC_MONITOR)     += oplus_pmic_monitor/
 obj-$(CONFIG_OPLUS_FEATURE_SAUPWK)     += oplus_saupwk/
 obj-$(CONFIG_OPLUS_FEATURE_DUMP_DEVICE_INFO)	+=  dump_device_info/
-obj-$(CONFIG_OPLUS_FEATURE_RECORD_MDMRST)     += mdmrst/
 obj-$(CONFIG_OPLUS_FEATURE_CMDLINE)     += cmdline_parser/
 
 ifdef CONFIG_OPLUS_SYSTEM_KERNEL_QCOM
