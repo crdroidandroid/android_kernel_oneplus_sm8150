@@ -1182,10 +1182,8 @@ if (oplus_display_get_hbm_mode()) {
 			}
 			if (rc)
 				DSI_ERR("[%s] failed to send DSI_CMD_HBM cmds, rc=%d\n", panel->name, rc);
-		} else if (cmp_display_panel_name("SOFEF03F_M") || cmp_display_panel_name("SOFEF03F") ||
-				cmp_display_panel_name("S6E3FC2") || cmp_display_panel_name("S6E3HC2")) {
-			pr_info("%s:decoupling for SOFEF03F & op7 models\n", __func__);
-		} else {
+		} else if (!(cmp_display_panel_name("SOFEF03F_M") || cmp_display_panel_name("SOFEF03F") ||
+				cmp_display_panel_name("S6E3FC2") || cmp_display_panel_name("S6E3HC2"))) {
 			if (bl_lvl > panel->bl_config.bl_normal_max_level)
 				payload[1] = 0xE0;
 			else
