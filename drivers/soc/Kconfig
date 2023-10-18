@@ -43,8 +43,4 @@ source "drivers/soc/oplus/oplus_nandswap/Kconfig"
 source "drivers/soc/oplus/thermal/Kconfig"
 #endif /* OPLUS_FEATURE_THERMAL_HORAE */
 
-#ifdef OPLUS_FEATURE_CPUFREQ_BOUNCING
-source "drivers/soc/oplus/rt_info/Kconfig"
-#endif
-
 endmenu
