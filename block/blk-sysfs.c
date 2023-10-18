@@ -17,9 +17,6 @@
 #include "blk-mq-debugfs.h"
 #include "blk-wbt.h"
 
-#if defined(OPLUS_FEATURE_FG_IO_OPT) && defined(CONFIG_OPLUS_FG_IO_OPT)
-#include "oplus_foreground_io_opt/oplus_foreground_io_opt.h"
-#endif /*OPLUS_FEATURE_FG_IO_OPT*/
 struct queue_sysfs_entry {
 	struct attribute attr;
 	ssize_t (*show)(struct request_queue *, char *);
@@ -715,26 +712,9 @@ static struct queue_sysfs_entry throtl_sample_time_entry = {
 };
 #endif
 
-#if defined(OPLUS_FEATURE_FG_IO_OPT) && defined(CONFIG_OPLUS_FG_IO_OPT)
-static struct queue_sysfs_entry queue_fgio_entry = {
-	.attr = {.name = "fg_io_cnt_max", .mode = S_IRUGO | S_IWUSR },
-	.show = queue_fg_count_max_show,
-	.store = queue_fg_count_max_store,
-};
-static struct queue_sysfs_entry queue_bothio_entry = {
-	.attr = {.name = "both_io_cnt_max", .mode = S_IRUGO | S_IWUSR },
-	.show = queue_both_count_max_show,
-	.store = queue_both_count_max_store,
-};
-#endif /*OPLUS_FEATURE_FG_IO_OPT*/
-
 static struct attribute *default_attrs[] = {
 	&queue_requests_entry.attr,
 	&queue_ra_entry.attr,
-#if defined(OPLUS_FEATURE_FG_IO_OPT) && defined(CONFIG_OPLUS_FG_IO_OPT)
-	&queue_fgio_entry.attr,
-	&queue_bothio_entry.attr,
-#endif /*OPLUS_FEATURE_FG_IO_OPT*/
 	&queue_max_hw_sectors_entry.attr,
 	&queue_max_sectors_entry.attr,
 	&queue_max_segments_entry.attr,
