@@ -118,10 +118,6 @@ endif
 obj-y += oplus_healthinfo/
 #endif /* OPLUS_FEATURE_HEALTHINFO */
 
-#ifdef OPLUS_FEATURE_MULTI_KSWAPD
-obj-$(CONFIG_OPLUS_MULTI_KSWAPD) += multi_kswapd/
-#endif /*OPLUS_FEATURE_MULTI_KSWAPD*/
-
 #if defined(OPLUS_FEATURE_MULTI_FREEAREA)
 obj-$(CONFIG_PHYSICAL_ANTI_FRAGMENTATION) += multi_freearea.o
 #endif

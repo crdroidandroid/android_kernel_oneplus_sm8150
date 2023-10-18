@@ -7770,15 +7770,3 @@ struct task_struct *oplus_get_cpu_task(int cpu)
 	return cpu_curr(cpu);
 }
 #endif
-
-#ifdef CONFIG_KSWAPD_UNBIND_MAX_CPU
-void upate_kswapd_unbind_cpu(void)
-{
-    struct root_domain *rd = NULL;
-    rcu_read_lock();
-    rd = cpu_rq(smp_processor_id())->rd;
-    if (rd->mid_cap_orig_cpu != -1 && rd->max_cap_orig_cpu != -1)
-        kswapd_unbind_cpu = rd->max_cap_orig_cpu;
-    rcu_read_unlock();
-}
-#endif

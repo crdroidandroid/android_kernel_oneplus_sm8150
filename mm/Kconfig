@@ -852,10 +852,6 @@ config FORCE_ALLOC_FROM_DMA_ZONE
 
 	  If unsure, say "n".
 
-#ifdef OPLUS_FEATURE_MULTI_KSWAPD
-source "mm/multi_kswapd/Kconfig"
-#endif /*OPLUS_FEATURE_MULTI_KSWAPD*/
-
 #ifdef OPLUS_FEATURE_PROCESS_RECLAIM
 # inactive pages only
 config PROCESS_RECLAIM_ENHANCE

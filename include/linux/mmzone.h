@@ -19,9 +19,6 @@
 #include <linux/page-flags-layout.h>
 #include <linux/atomic.h>
 #include <asm/page.h>
-#if defined(OPLUS_FEATURE_MULTI_KSWAPD) && defined(CONFIG_OPLUS_MULTI_KSWAPD)
-#include <linux/multi_kswapd.h>
-#endif /*OPLUS_FEATURE_MULTI_KSWAPD*/
 /* Free memory management - zoned buddy allocator.  */
 #ifndef CONFIG_FORCE_MAX_ZONEORDER
 #define MAX_ORDER 11
@@ -687,12 +684,8 @@ typedef struct pglist_data {
 	int node_id;
 	wait_queue_head_t kswapd_wait;
 	wait_queue_head_t pfmemalloc_wait;
-#if defined(OPLUS_FEATURE_MULTI_KSWAPD) && defined(CONFIG_OPLUS_MULTI_KSWAPD)
-	struct task_struct *kswapd[MAX_KSWAPD_THREADS];
-#else
 	struct task_struct *kswapd;	/* Protected by
 					   mem_hotplug_begin/end() */
-#endif /*OPLUS_FEATURE_MULTI_KSWAPD*/
 	int kswapd_order;
 	enum zone_type kswapd_classzone_idx;
 
