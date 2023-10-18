@@ -59,13 +59,6 @@
 #define NETLINK_OPLUS_WIFI_CAP_CENTER_SYNC 39
 #define NETLINK_OPLUS_WIFI_CAP_CENTER_ASYNC 40
 
-/* #define OPLUS_NETLINK_MM_KEVENT 41  (defined in oplus_mm_kevent.h file) */
-
-/* #ifdef OPLUS_FEATURE_THEIA */
-/* should match with oplus_theia/include/TheiaKeventThread.h define */
-#define OPLUS_NETLINK_THEIA_KEVENT 43
-/* #endif */ /* OPLUS_FEATURE_THEIA */
-
 //#define MAX_LINKS 40
 #define MAX_LINKS 45
 //#endif /* OPLUS_FEATURE_WIFI_CAPCENTER */
