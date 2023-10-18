@@ -902,18 +902,6 @@ tp_irq_active: tp_irq_active {
 		label = "param_mem";
 	};
 
-	// #ifdef OPLUS_BUG_STABILITY
-	/* Add for get current xbl_uefi log, add reserved size 2M for kernelboot xbl uefis*/
-	// xbl_uefi_mem address get from boot_images Core.dsc.inc file: PcdEmbeddedFdBaseAddress + SERIAL_BUFFER_OFFSET,0x9FC00000+0x186f7000=0xB82f7000
-	// kernel boot log: 0xB8200000 ~ 0xB82f7000
-	kboot_uboot_logmem: kboot_uboot_logmem@0xB8200000 {
-		reg = <0x0 0xB8200000 0x0 0x100000>;
-		compatible = "oplus,xbl_uefi_kbootlog";
-		xbluefi-offset = <0xF7000>;
-		no-map;
-	};
-	// #endif
-
 	//after cdsp_sec_mem
 	ramoops: ramoops@0xA9800000 {
 		compatible = "ramoops";
