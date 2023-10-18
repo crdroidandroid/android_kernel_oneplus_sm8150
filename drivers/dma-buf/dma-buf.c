@@ -45,11 +45,6 @@
 #include <uapi/linux/dma-buf.h>
 #include <uapi/linux/magic.h>
 
-#ifdef OPLUS_FEATURE_LOWMEM_DBG
-/* usage when lowmmem occurs. */
-#include <soc/oplus/lowmem_dbg.h>
-#endif /* OPLUS_FEATURE_LOWMEM_DBG */
-
 #if defined(OPLUS_FEATURE_PERFORMANCE) && defined(CONFIG_PROC_FS)
 #include <linux/proc_fs.h>
 #endif
@@ -493,14 +488,6 @@ static inline int is_dma_buf_file(struct file *file)
 {
 	return file->f_op == &dma_buf_fops;
 }
-
-#ifdef OPLUS_FEATURE_LOWMEM_DBG
-/* usage when lowmmem occurs. */
-inline int oplus_is_dma_buf_file(struct file *file)
-{
-       return is_dma_buf_file(file);
-}
-#endif /* OPLUS_FEATURE_LOWMEM_DBG */
 
 static struct file *dma_buf_getfile(struct dma_buf *dmabuf, int flags)
 {
