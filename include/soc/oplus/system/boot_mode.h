@@ -39,8 +39,5 @@ extern bool qpnp_is_charger_reboot(void);
 
 #ifdef OPLUS_BUG_STABILITY
 /*Add for kernel monitor whole bootup*/
-#ifdef PHOENIX_PROJECT
-extern bool op_is_monitorable_boot(void);
-#endif
 #endif
 

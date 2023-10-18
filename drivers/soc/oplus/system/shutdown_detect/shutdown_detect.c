@@ -86,13 +86,11 @@
 
 #define TASK_INIT_COMM                      "init"
 
-#define OPLUS_PARTITION_OPPORESERVE3_LINK    "/dev/block/by-name/opporeserve3"
+#define OPLUS_PARTITION_OPPORESERVE3_LINK     "/dev/block/by-name/opporeserve3"
 /* #ifdef OPLUS_CUSTOM_OP_DEF */
-#define DERIVED_PARTITION_OPLUSRESERVE3_LINK    "/dev/block/by-name/reserve3"
+#define DERIVED_PARTITION_OPLUSRESERVE3_LINK  "/dev/block/by-name/reserve3"
 /* #endif */
 #define OPLUS_PARTITION_OPLUSRESERVE3_LINK    "/dev/block/by-name/oplusreserve3"
-
-#define ST_LOG_NATIVE_HELPER                "/system/bin/phoenix_log_native_helper.sh"
 
 #define SIG_SHUTDOWN                        (SIGRTMIN + 0x12)
 
