@@ -1,4 +1,3 @@
-obj-$(CONFIG_OPLUS_FEATURE_SAUPWK) += saupwk.o
 obj-$(CONFIG_OPLUS_FEATURE_ANDROIDBOOT) += androidboot.o
 obj-$(CONFIG_OPLUS_FEATURE_FTMMODE) 	+= oplus_ftm_mode.o
 obj-$(CONFIG_OPLUS_FEATURE_CHARGERPRESENT) 	+= oplus_charger_present.o
