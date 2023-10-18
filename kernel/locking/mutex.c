@@ -35,10 +35,6 @@
 # include "mutex.h"
 #endif
 
-#ifdef CONFIG_OPLUS_FEATURE_HUNG_TASK_ENHANCE
-#include <soc/oplus/system/oplus_signal.h>
-#endif
-
 void
 __mutex_init(struct mutex *lock, const char *name, struct lock_class_key *key)
 {
@@ -833,12 +829,7 @@ __mutex_lock_common(struct mutex *lock, long state, unsigned int subclass,
 		 * wait_lock. This ensures the lock cancellation is ordered
 		 * against mutex_unlock() and wake-ups do not go missing.
 		 */
-#ifdef CONFIG_OPLUS_FEATURE_HUNG_TASK_ENHANCE
-		if (unlikely(signal_pending_state(state, current))
-			|| hung_long_and_fatal_signal_pending(current)) {
-#else
 		if (unlikely(signal_pending_state(state, current))) {
-#endif
 			ret = -EINTR;
 			goto err;
 		}
