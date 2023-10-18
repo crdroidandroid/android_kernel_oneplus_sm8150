@@ -14343,12 +14343,6 @@ static const struct snd_kcontrol_new rx_cdc_dma_rx_0_port_mixer_controls[] = {
 	MSM_BACKEND_DAI_INT4_MI2S_RX,
 	MSM_BACKEND_DAI_SLIMBUS_9_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_4", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_RX_CDC_DMA_RX_0,
-	MSM_BACKEND_DAI_TX_CDC_DMA_TX_4, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 };
 
 static const struct snd_kcontrol_new sbus_0_rx_port_mixer_controls[] = {
@@ -14640,18 +14634,6 @@ static const struct snd_kcontrol_new sbus_6_rx_port_mixer_controls[] = {
 	MSM_BACKEND_DAI_SLIMBUS_6_RX,
 	MSM_BACKEND_DAI_SLIMBUS_9_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
-
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SOC_DOUBLE_EXT("SLIM_0_TX_MMI", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_SLIMBUS_6_RX,
-	MSM_BACKEND_DAI_SLIMBUS_0_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	/* GuoWang.Huang.MM.AudioDriver.Machine, 2019/12/27, Add for ktv */
-	 SOC_DOUBLE_EXT("SLIM_1_TX_MMI", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_SLIMBUS_6_RX,
-	MSM_BACKEND_DAI_SLIMBUS_1_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 };
 
 static const struct snd_kcontrol_new bt_sco_rx_port_mixer_controls[] = {
@@ -14757,17 +14739,6 @@ static const struct snd_kcontrol_new primary_mi2s_rx_port_mixer_controls[] = {
 	MSM_BACKEND_DAI_PRI_MI2S_RX,
 	MSM_BACKEND_DAI_SEC_AUXPCM_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_3", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_PRI_MI2S_RX,
-	MSM_BACKEND_DAI_TX_CDC_DMA_TX_3, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-
-	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_4", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_PRI_MI2S_RX,
-	MSM_BACKEND_DAI_TX_CDC_DMA_TX_4, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 };
 
 static const struct snd_kcontrol_new usb_rx_port_mixer_controls[] = {
@@ -14818,18 +14789,6 @@ static const struct snd_kcontrol_new quat_mi2s_rx_port_mixer_controls[] = {
 	MSM_BACKEND_DAI_QUATERNARY_MI2S_RX,
 	MSM_BACKEND_DAI_SLIMBUS_8_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
-
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SOC_DOUBLE_EXT("SLIM_0_TX_MMI", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_QUATERNARY_MI2S_RX,
-	MSM_BACKEND_DAI_SLIMBUS_0_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	/* GuoWang.Huang.MM.AudioDriver.Machine, 2019/12/27, Add for ktv */
-	SOC_DOUBLE_EXT("SLIM_1_TX_MMI", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_QUATERNARY_MI2S_RX,
-	MSM_BACKEND_DAI_SLIMBUS_1_TX, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 };
 
 static const struct snd_kcontrol_new quin_mi2s_rx_port_mixer_controls[] = {
@@ -16960,17 +16919,6 @@ static const struct snd_kcontrol_new tert_mi2s_rx_port_mixer_controls[] = {
 	MSM_BACKEND_DAI_TERTIARY_MI2S_RX,
 	MSM_BACKEND_DAI_SLIMBUS_8_TX, 1, 0, msm_routing_get_port_mixer,
 	msm_routing_put_port_mixer),
-		#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_3", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_TERTIARY_MI2S_RX,
-	MSM_BACKEND_DAI_TX_CDC_DMA_TX_3, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-
-	SOC_DOUBLE_EXT("TX_CDC_DMA_TX_4", SND_SOC_NOPM,
-	MSM_BACKEND_DAI_TERTIARY_MI2S_RX,
-	MSM_BACKEND_DAI_TX_CDC_DMA_TX_4, 1, 0, msm_routing_get_port_mixer,
-	msm_routing_put_port_mixer),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 };
 
 static const struct snd_kcontrol_new sec_mi2s_rx_port_mixer_controls[] = {
@@ -19004,18 +18952,8 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 		0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_OUT("CDC_DMA_UL_HL", "CDC_DMA_HOSTLESS Capture",
 		0, 0, 0, 0),
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SND_SOC_DAPM_AIF_IN("TX3_CDC_DMA_DL_HL",
-		"TX3_CDC_DMA_HOSTLESS Playback", 0, 0, 0, 0),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 	SND_SOC_DAPM_AIF_OUT("TX3_CDC_DMA_UL_HL",
 		"TX3_CDC_DMA_HOSTLESS Capture", 0, 0, 0, 0),
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	SND_SOC_DAPM_AIF_IN("TX4_CDC_DMA_DL_HL",
-		"TX4_CDC_DMA_HOSTLESS Playback", 0, 0, 0, 0),
-	SND_SOC_DAPM_AIF_OUT("TX4_CDC_DMA_UL_HL",
-		"TX4_CDC_DMA_HOSTLESS Capture", 0, 0, 0, 0),
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 	SND_SOC_DAPM_AIF_OUT("CPE_LSM_UL_HL", "CPE LSM capture",
 		0, 0, 0, 0),
 	SND_SOC_DAPM_AIF_IN("SLIM1_DL_HL", "SLIMBUS1_HOSTLESS Playback",
@@ -22788,9 +22726,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"RX_CDC_DMA_RX_0_DL_HL", "Switch", "CDC_DMA_DL_HL"},
 	{"RX_CDC_DMA_RX_0", NULL, "RX_CDC_DMA_RX_0_DL_HL"},
 	{"TX3_CDC_DMA_UL_HL", NULL, "TX_CDC_DMA_TX_3"},
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	{"TX4_CDC_DMA_UL_HL", NULL, "TX_CDC_DMA_TX_4"},
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 	{"LSM1 Mixer", "SLIMBUS_0_TX", "SLIMBUS_0_TX"},
 	{"LSM1 Mixer", "SLIMBUS_1_TX", "SLIMBUS_1_TX"},
 	{"LSM1 Mixer", "SLIMBUS_3_TX", "SLIMBUS_3_TX"},
@@ -23725,14 +23660,6 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"QUIN_MI2S_RX Port Mixer", "SLIM_0_TX", "SLIMBUS_0_TX"},
 	{"QUIN_MI2S_RX Port Mixer", "SLIM_8_TX", "SLIMBUS_8_TX"},
 	{"QUIN_MI2S_RX", NULL, "QUIN_MI2S_RX Port Mixer"},
-
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	{"SLIMBUS_6_RX Port Mixer", "SLIM_0_TX_MMI", "SLIMBUS_0_TX"},
-	{"QUAT_MI2S_RX Port Mixer", "SLIM_0_TX_MMI", "SLIMBUS_0_TX"},
-	/* GuoWang.Huang.MM.AudioDriver.Machine, 2019/12/27, Add for ktv */
-	{"SLIMBUS_6_RX Port Mixer", "SLIM_1_TX_MMI", "SLIMBUS_1_TX"},
-	{"QUAT_MI2S_RX Port Mixer", "SLIM_1_TX_MMI", "SLIMBUS_1_TX"},
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 
 	/* Backend Enablement */
 
@@ -24723,10 +24650,6 @@ static int msm_routing_probe(struct snd_soc_platform *platform)
 {
 	snd_soc_dapm_new_controls(&platform->component.dapm, msm_qdsp6_widgets,
 			   ARRAY_SIZE(msm_qdsp6_widgets));
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	snd_soc_dapm_add_routes(&platform->component.dapm, intercon_oplus_lookback,
-		ARRAY_SIZE(intercon_oplus_lookback));
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 	snd_soc_dapm_add_routes(&platform->component.dapm, intercon,
 		ARRAY_SIZE(intercon));
 

@@ -39,10 +39,6 @@
 #include "codecs/bolero/wsa-macro.h"
 #include "kona-port-config.h"
 
-#ifdef OPLUS_FEATURE_AUDIO_FTM
-#include "dailink_extends.h"
-#endif /* OPLUS_FEATURE_AUDIO_FTM */
-
 //#ifdef OPLUS_ARCH_EXTENDS
 #ifdef CONFIG_SND_SOC_SIA81XX
 #include "codecs/sia81xx/sia81xx_aux_dev_if.h"
@@ -6075,9 +6071,6 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.cpu_dai_name = "TX3_CDC_DMA_HOSTLESS",
 		.platform_name = "msm-pcm-hostless",
 		.dynamic = 1,
-		#ifdef OPLUS_FEATURE_AUDIO_FTM
-		.dpcm_playback = 1,
-		#endif /* OPLUS_FEATURE_AUDIO_FTM */
 		.dpcm_capture = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			    SND_SOC_DPCM_TRIGGER_POST},
@@ -6213,10 +6206,6 @@ static struct snd_soc_dai_link msm_common_misc_fe_dai_links[] = {
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_cdc_dma_be_ops,
 	},
-	#ifdef OPLUS_FEATURE_AUDIO_FTM
-	TX_CDC_DMA_HOSTLESS_DAILINK("TX4_CDC_DMA Hostless", "TX4_CDC_DMA Hostless", "TX4_CDC_DMA_HOSTLESS"),
-
-	#endif /* OPLUS_FEATURE_AUDIO_FTM */
 };
 
 static struct snd_soc_dai_link msm_common_be_dai_links[] = {
