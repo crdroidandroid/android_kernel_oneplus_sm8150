@@ -889,11 +889,6 @@ config DAYAMIC_TUNNING_SWAPPINESS
 	help
 	  tunning swappiess depends on file_pages size
 
-#ifdef OPLUS_FEATURE_MEMLEAK_DETECT
-#/* memleak detect of kmalloc/vmalloc/ion */
-source "mm/malloc_track/Kconfig.compat"
-source "mm/task_mem/Kconfig"
-#endif
 #ifdef OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY
 config VIRTUAL_RESERVE_MEMORY
 	bool "reserved vma for gpu emergency mmap"

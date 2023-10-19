@@ -895,13 +895,6 @@ static const struct file_operations proc_sdinfo_fops = {
 static struct proc_dir_entry *oplus_healthinfo = NULL;
 static struct proc_dir_entry *sched_thresh = NULL;
 
-#ifdef CONFIG_KMALLOC_DEBUG
-/* operations of vmalloc_debug and kmalloc_debug */
-extern int __weak create_kmalloc_debug(struct proc_dir_entry *parent);
-#endif
-#ifdef CONFIG_VMALLOC_DEBUG
-extern int __weak create_vmalloc_debug(struct proc_dir_entry *parent);
-#endif
 #ifdef CONFIG_VIRTUAL_RESERVE_MEMORY
 extern int create_reserved_area_enable_proc(struct proc_dir_entry *parent);
 #endif
@@ -1035,19 +1028,6 @@ static int __init oplus_healthinfo_init(void)
         ohm_err("create fsync_thresh proc failed.\n");
         goto ERROR_INIT_VERSION;
     }
-#ifdef CONFIG_VMALLOC_DEBUG
-	/* create the vmalloc_debug file node */
-	ret = create_vmalloc_debug(oplus_healthinfo);
-	if (ret)
-		goto ERROR_INIT_VERSION;
-#endif
-
-#ifdef CONFIG_KMALLOC_DEBUG
-	/* create the kmalloc_debug file node. */
-	ret = create_kmalloc_debug(oplus_healthinfo);
-	if (ret)
-		goto ERROR_INIT_VERSION;
-#endif
 
 #ifdef CONFIG_VIRTUAL_RESERVE_MEMORY
 	/* create vm_featurre file node */

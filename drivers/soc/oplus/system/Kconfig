@@ -31,7 +31,6 @@ config OPLUS_FEATURE_DETAILHEAD
         define this config to add cpu number and current id and current comm to kmsg
 
 source "drivers/soc/oplus/system/feedback/Kconfig"
-source "drivers/soc/oplus/system/slabtrace/Kconfig"
 source "drivers/soc/oplus/system/oplus_project/Kconfig"
 source "drivers/soc/oplus/system/project_info/Kconfig"
 source "drivers/soc/oplus/system/cmdline_parser/Kconfig"

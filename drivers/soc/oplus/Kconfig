@@ -26,8 +26,3 @@ source "drivers/soc/oplus/oplus_kevent_feedback/Kconfig"
 
 source "drivers/soc/oplus/system/Kconfig"
 #endif /* VENDOR_EDIT */
-
-#ifdef OPLUS_FEATURE_MEMLEAK_DETECT
-#Add for svelte
-source "drivers/soc/oplus/svelte/Kconfig"
-#endif /* OPLUS_FEATURE_MEMLEAK_DETECT */

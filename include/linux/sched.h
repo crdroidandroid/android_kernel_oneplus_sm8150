@@ -1048,7 +1048,6 @@ struct task_struct {
 #ifdef CONFIG_DETECT_HUNG_TASK
 	/* hung task detection */
 	unsigned long			last_switch_count;
-	unsigned long			last_switch_time;
 	bool hang_detection_enabled;
 #endif
 	/* Filesystem information: */
@@ -1295,10 +1294,6 @@ struct task_struct {
 #ifdef CONFIG_LATENCYTOP
 	int				latency_record_count;
 	struct latency_record		latency_record[LT_SAVECOUNT];
-#endif
-#if defined(OPLUS_FEATURE_MEMLEAK_DETECT) && defined(CONFIG_ION) && defined(CONFIG_DUMP_TASKS_MEM)
-	struct list_head user_tasks;
-	atomic64_t ions;
 #endif
 	/*
 	 * Time slack values; these are used to round up poll() and

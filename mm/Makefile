@@ -122,12 +122,6 @@ obj-y += oplus_healthinfo/
 obj-$(CONFIG_PHYSICAL_ANTI_FRAGMENTATION) += multi_freearea.o
 #endif
 
-#if defined(OPLUS_FEATURE_MEMLEAK_DETECT)
-#/* collect all tasks memory info */
-#ifeq ($(OPLUS_FEATURE_MEMLEAK_DETECT), yes)
-obj-$(CONFIG_DUMP_TASKS_MEM) += task_mem/
-#endif
-#endif /*defined(OPLUS_FEATURE_MEMLEAK_DETECT)
 #if defined(OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY)
 obj-$(CONFIG_VIRTUAL_RESERVE_MEMORY) += reserve_area.o
 #endif /*defined(OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY)
