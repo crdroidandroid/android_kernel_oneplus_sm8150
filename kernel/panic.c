@@ -32,9 +32,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/exception.h>
 #include <soc/qcom/minidump.h>
-#ifdef OPLUS_FEATURE_AGINGTEST
-#include <linux/soc/qcom/smem.h>
-#endif /*OPLUS_FEATURE_AGINGTEST*/
 
 #define PANIC_TIMER_STEP 100
 #define PANIC_BLINK_SPD 18
@@ -204,9 +201,6 @@ void panic(const char *fmt, ...)
 	int state = 0;
 	int old_cpu, this_cpu;
 	bool _crash_kexec_post_notifiers = crash_kexec_post_notifiers;
-#ifdef OPLUS_FEATURE_AGINGTEST
-	char *function_name;
-#endif /*OPLUS_FEATURE_AGINGTEST*/
 	trace_kernel_panic(0);
 
 	if (panic_on_warn) {
@@ -261,10 +255,6 @@ void panic(const char *fmt, ...)
 		panic_flush_device_cache(2000);
 #endif
 	pr_emerg("Kernel panic - not syncing: %s\n", buf);
-#ifdef OPLUS_FEATURE_AGINGTEST
-	function_name = parse_function_builtin_return_address((unsigned long)__builtin_return_address(0));
-	save_dump_reason_to_smem(buf, function_name);
-#endif /*OPLUS_FEATURE_AGINGTEST*/
 #ifdef CONFIG_DEBUG_BUGVERBOSE
 	/*
 	 * Avoid nested stack-dumping if a panic occurs during oops processing

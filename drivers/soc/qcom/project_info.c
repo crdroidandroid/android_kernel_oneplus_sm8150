@@ -598,19 +598,6 @@ uint32 get_hw_version(void)
     return 0;
 }
 
-void dump_reason_init_smem(void)
-{
-    int ret;
-
-    ret = qcom_smem_alloc(QCOM_SMEM_HOST_ANY,SMEM_DUMP_INFO,
-                                  sizeof(struct dump_info));
-
-    if (ret < 0 && ret != -EEXIST) {
-          pr_err("%s:unable to allocate dp_info \n", __func__);
-          return;
-    }
-}
-
 int __init init_project_info(void)
 {
     static bool project_info_init_done;
@@ -682,7 +669,6 @@ int __init init_project_info(void)
 	get_cpu_type();
 	push_component_info(CPU, cpu_type, "Qualcomm");
 	project_info_init_done = true;
-	dump_reason_init_smem();
 
 	return 0;
 }

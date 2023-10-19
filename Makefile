@@ -489,12 +489,6 @@ KBUILD_CPPFLAGS += -DCONFIG_HIGH_TEMP_VERSION
 endif
 #endif OPLUS_FEATURE_CHG_BASIC
 #ifdef OPLUS_FEATURE_MEMLEAK_DETECT
-# Add for memleak test
-ifeq ($(AGING_DEBUG_MASK),1)
-# enable memleak detect daemon
-OPLUS_MEMLEAK_DETECT := true
-endif
-
 ifeq ($(TARGET_MEMLEAK_DETECT_TEST),0)
 # disable memleak detect daemon
 OPLUS_MEMLEAK_DETECT := false
