@@ -612,19 +612,17 @@ int pil_do_ramdump(struct pil_desc *desc,
 		pil_err(desc, "%s: Ramdump collection failed for subsys %s rc:%d\n",
 				__func__, desc->name, ret);
 
-#ifdef OPLUS_FEATURE_SSR
+#if defined(OPLUS_FEATURE_SSR) && defined(CONFIG_OPLUS_FEATURE_MM_FEEDBACK)
 	if(strlen(desc->name) > 0 && (strncmp(desc->name,"adsp",strlen(desc->name)) == 0)) {
 		strncpy(strHashSource,desc->name,strlen(desc->name));
 		hashid = BKDRHash(strHashSource,strlen(strHashSource));
 		scnprintf(payload, sizeof(payload), "payload@@%s$$fid@@%u", desc->name, hashid);
-		#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
 		upload_mm_fb_kevent_to_atlas_limit(OPLUS_AUDIO_EVENTID_ADSP_CRASH, payload, OPLUS_FB_ADSP_CRASH_RATELIMIT);
-		#endif /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
 		if(desc->dev){
 			__adsp_send_uevent(desc->dev, payload);
 		}
 	}
-#endif /* OPLUS_FEATURE_SSR */
+#endif /* OPLUS_FEATURE_SSR */ /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
 
 	if (desc->subsys_vmid > 0)
 		ret = pil_assign_mem_to_subsys(desc, priv->region_start,
