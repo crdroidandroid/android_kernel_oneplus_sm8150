@@ -48,10 +48,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/sched.h>
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-#include <linux/sched_assist/sched_assist_common.h>
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
 DEFINE_PER_CPU_SHARED_ALIGNED(struct rq, runqueues);
 
 /*
@@ -907,16 +903,7 @@ static inline void check_class_changed(struct rq *rq, struct task_struct *p,
 void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
 {
 	const struct sched_class *class;
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-//#ifdef CONFIG_UXCHAIN_V2
-	u64 wallclock = sched_clock();
 
-	if (sysctl_uxchain_v2 &&
-		wallclock - rq->curr->get_mmlock_ts < PREEMPT_DISABLE_RWSEM &&
-		rq->curr->get_mmlock &&
-		!(p->flags & PF_WQ_WORKER) && !task_has_rt_policy(p))
-		return;
-#endif
 	if (p->sched_class == rq->curr->sched_class) {
 		rq->curr->sched_class->check_preempt_curr(rq, p, flags);
 	} else {
@@ -3245,69 +3232,10 @@ unsigned long long task_sched_runtime(struct task_struct *p)
 
 unsigned int capacity_margin_freq = 1280; /* ~20% margin */
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-extern int sysctl_frame_rate;
-extern unsigned int sched_ravg_window;
-extern bool ux_task_misfit(struct task_struct *p, int cpu);
-u64 ux_task_load[NR_CPUS] = {0};
-u64 ux_load_ts[NR_CPUS] = {0};
-static u64 calc_freq_ux_load(struct task_struct *p, u64 wallclock)
-{
-	unsigned int maxtime = 0, factor = 0;
-	unsigned int window_size = sched_ravg_window / NSEC_PER_MSEC;
-	u64 timeline = 0, freq_exec_load = 0, freq_ravg_load = 0;
-	u64 wakeclock = p->last_wake_ts;
-
-	if (wallclock < wakeclock)
-		return 0;
-
-	switch (sysctl_frame_rate) {
-		case 60:
-		case 90:
-			maxtime = 5;
-			break;
-		case 120:
-			maxtime = 4;
-			break;
-		default:
-			return 0;
-	}
-
-	timeline = wallclock - wakeclock;
-	factor = window_size / maxtime;
-	freq_exec_load = timeline * factor;
-
-	if (freq_exec_load > sched_ravg_window)
-		freq_exec_load = sched_ravg_window;
-
-	freq_ravg_load = (p->ravg.prev_window + p->ravg.curr_window) << 1;
-	if (freq_ravg_load > sched_ravg_window)
-		freq_ravg_load = sched_ravg_window;
-
-	return max(freq_exec_load, freq_ravg_load);
-}
-#endif
-
 /*
  * This function gets called by the timer code, with HZ frequency.
  * We call it with interrupts disabled.
  */
-void adjust_sched_assist_input_ctrl(void){
-	if (!sysctl_input_boost_enabled)
-		return;
-	if(sysctl_slide_boost_enabled){
-		sysctl_input_boost_enabled = 0;
-		sched_assist_input_boost_duration = 0;
-		return;
-	}
-	if(jiffies_to_msecs(jiffies) < sched_assist_input_boost_duration){
-		return;
-	}
-	else{
-                sched_assist_input_boost_duration = 0;
-                sysctl_input_boost_enabled = 0;
-	}
-}
 void scheduler_tick(void)
 {
 	int cpu = smp_processor_id();
@@ -3337,24 +3265,7 @@ void scheduler_tick(void)
 	early_notif = early_detection_notify(rq, wallclock);
 	if (early_notif)
 		flag = SCHED_CPUFREQ_WALT | SCHED_CPUFREQ_EARLY_DET;
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	adjust_sched_assist_input_ctrl();
-	if (sched_assist_scene(SA_SLIDE)) {
-		if(rq->curr && is_heavy_ux_task(rq->curr) && !ux_task_misfit(rq->curr, cpu)) {
-			ux_task_load[cpu] = calc_freq_ux_load(rq->curr, wallclock);
-			ux_load_ts[cpu] = wallclock;
-			flag |= (SCHED_CPUFREQ_WALT | SCHED_CPUFREQ_BOOST);
-		}
-		else if (ux_task_load[cpu] != 0) {
-			ux_task_load[cpu] = 0;
-			ux_load_ts[cpu] = wallclock;
-			flag |= (SCHED_CPUFREQ_WALT | SCHED_CPUFREQ_RESET);
-		}
-	} else {
-		ux_task_load[cpu] = 0;
-		ux_load_ts[cpu] = 0;
-	}
-#endif
+
 	cpufreq_update_util(rq, flag);
 	rq_unlock(rq, &rf);
 
@@ -3722,10 +3633,6 @@ static void __sched notrace __schedule(bool preempt)
 		}
 		switch_count = &prev->nvcsw;
 	}
-
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	prev->enqueue_time = rq->clock;
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
 
 	next = pick_next_task(rq, prev, &rf);
 	clear_tsk_need_resched(prev);
@@ -6521,9 +6428,6 @@ void __init sched_init_smp(void)
 	sched_init_granularity();
 	free_cpumask_var(non_isolated_cpus);
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	ux_init_cpu_data();
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
 	init_sched_rt_class();
 	init_sched_dl_class();
 
@@ -6643,9 +6547,6 @@ void __init sched_init(void)
 		init_cfs_rq(&rq->cfs);
 		init_rt_rq(&rq->rt);
 		init_dl_rq(&rq->dl);
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-		ux_init_rq_data(rq);
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
 #ifdef CONFIG_FAIR_GROUP_SCHED
 		root_task_group.shares = ROOT_TASK_GROUP_LOAD;
 		INIT_LIST_HEAD(&rq->leaf_cfs_rq_list);

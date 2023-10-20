@@ -396,15 +396,9 @@ static int ion_system_heap_allocate(struct ion_heap *heap,
 		unsigned int alloc_sz = 0;
 		while (size_remaining > 0) {
 
-#ifdef OPLUS_FEATURE_UIFIRST
-			current->static_ux = 2;
-#endif /* OPLUS_FEATURE_UIFIRST */
 			info = boost_pool_allocate(boost_pool,
 						   size_remaining,
 						   max_order);
-#ifdef OPLUS_FEATURE_UIFIRST
-			current->static_ux = 0;
-#endif /* OPLUS_FEATURE_UIFIRST */
 			if (!info)
 				break;
 

@@ -96,10 +96,6 @@
 #endif
 #if defined(CONFIG_SYSCTL)
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-#include <linux/sched_assist/sched_assist_common.h>
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
 /* External variables not in a header file. */
 #ifdef CONFIG_USB
 extern int deny_new_usb;
@@ -123,12 +119,6 @@ extern int sysctl_nr_trim_pages;
 /* Constants used for minimum and  maximum */
 #ifdef CONFIG_LOCKUP_DETECTOR
 static int sixty = 60;
-#endif
-
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-//#ifdef CONFIG_UXCHAIN_V2
-int sysctl_uxchain_v2 = 1;
-u64 sysctl_mmapsem_uninterruptable_time;
 #endif
 
 static int __maybe_unused neg_one = -1;
@@ -362,53 +352,10 @@ static int max_sched_tunable_scaling = SCHED_TUNABLESCALING_END-1;
 #endif /* CONFIG_SMP */
 #endif /* CONFIG_SCHED_DEBUG */
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-int sysctl_sched_assist_enabled = 1;
-int sysctl_sched_assist_scene = 0;
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-int sysctl_cpu_multi_thread = 0;
-#endif
-
 #ifdef CONFIG_COMPACTION
 static int min_extfrag_threshold;
 static int max_extfrag_threshold = 1000;
 #endif
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-
-int sysctl_slide_boost_enabled = 0;
-int sysctl_boost_task_threshold = 51;
-int sysctl_frame_rate = 60;
-int sched_frame_rate_handler(struct ctl_table *table, int write, void __user *buffer, size_t *lenp, loff_t *ppos)
-{
-	int ret;
-
-	if (write && *ppos)
-		*ppos = 0;
-
-	ret = proc_dointvec(table, write, buffer, lenp, ppos);
-
-	return ret;
-}
-
-int sysctl_sched_assist_input_boost_ctrl_handler(struct ctl_table * table, int write,
-	void __user * buffer, size_t * lenp, loff_t * ppos)
-{
-	int result;
-	static DEFINE_MUTEX(sa_boost_mutex);
-	mutex_lock(&sa_boost_mutex);
-	result = proc_dointvec(table, write, buffer, lenp, ppos);
-	if (!write)
-		goto out;
-	/*orms write just write this proc to tell us update input window*/
-	sched_assist_input_boost_duration  = jiffies_to_msecs(jiffies) + 1000; /*DEFAULT_INPUT_BOOST_DURATION*/
-out:
-	mutex_unlock(&sa_boost_mutex);
-	return result;
-}
-
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
 
 static struct ctl_table kern_table[] = {
 	{
@@ -1540,80 +1487,6 @@ static struct ctl_table kern_table[] = {
 		.maxlen		= sizeof(int),
 		.mode		= 0444,
 		.proc_handler	= proc_dointvec,
-	},
-#endif
-
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	{
-		.procname	= "sched_assist_enabled",
-		.data		= &sysctl_sched_assist_enabled,
-		.maxlen		= sizeof(int),
-		.mode		= 0666,
-		.proc_handler	= proc_dointvec,
-	},
-	{
-		.procname	= "sched_assist_scene",
-		.data		= &sysctl_sched_assist_scene,
-		.maxlen		= sizeof(int),
-		.mode		= 0666,
-		.proc_handler = sysctl_sched_assist_scene_handler,
-	},
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	{
-		.procname	= "cpu_multi_thread",
-		.data		= &sysctl_cpu_multi_thread,
-		.maxlen 	= sizeof(int),
-		.mode		= 0666,
-		.proc_handler = proc_dointvec,
-	},
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	{
-		.procname	= "slide_boost_enabled",
-		.data		= &sysctl_slide_boost_enabled,
-		.maxlen 	= sizeof(int),
-		.mode		= 0666,
-		.proc_handler = proc_dointvec,
-	},
-	{
-		.procname	= "boost_task_threshold",
-		.data		= &sysctl_boost_task_threshold,
-		.maxlen 	= sizeof(int),
-		.mode		= 0666,
-		.proc_handler = proc_dointvec,
-	},
-	{
-		.procname	= "input_boost_enabled",
-		.data		= &sysctl_input_boost_enabled,
-		.maxlen 	= sizeof(int),
-		.mode		= 0666,
-		.proc_handler = sysctl_sched_assist_input_boost_ctrl_handler,
-	},
-	{
-		.procname	= "frame_rate",
-		.data		= &sysctl_frame_rate,
-		.maxlen 	= sizeof(int),
-		.mode		= 0666,
-		.proc_handler = sched_frame_rate_handler,
-	},
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-//#ifdef CONFIG_UXCHAIN_V2
-	{
-		.procname	= "uxchain_v2",
-		.data		= &sysctl_uxchain_v2,
-		.maxlen = sizeof(int),
-		.mode		= 0666,
-		.proc_handler = proc_dointvec,
-	},
-	{
-		.procname	= "mmapsem_uninterruptable_time",
-		.data		= &sysctl_mmapsem_uninterruptable_time,
-		.maxlen = sizeof(u64),
-		.mode		= 0666,
-		.proc_handler = proc_dointvec,
 	},
 #endif
 	{ }

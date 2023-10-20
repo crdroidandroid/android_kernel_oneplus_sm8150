@@ -28,9 +28,6 @@
 #define RWSEM_WAITING_BIAS		(-RWSEM_ACTIVE_MASK-1)
 #define RWSEM_ACTIVE_READ_BIAS		RWSEM_ACTIVE_BIAS
 #define RWSEM_ACTIVE_WRITE_BIAS		(RWSEM_WAITING_BIAS + RWSEM_ACTIVE_BIAS)
-#ifdef CONFIG_MMAP_LOCK_OPT
-#include <linux/rwsem.h>
-#endif
 
 /*
  * lock for reading
@@ -48,9 +45,6 @@ static inline int __down_read_trylock(struct rw_semaphore *sem)
 	while ((tmp = atomic_long_read(&sem->count)) >= 0) {
 		if (tmp == atomic_long_cmpxchg_acquire(&sem->count, tmp,
 				   tmp + RWSEM_ACTIVE_READ_BIAS)) {
-#ifdef CONFIG_MMAP_LOCK_OPT
-			uxchain_rwsem_down(sem);
-#endif
 			return 1;
 		}
 	}
@@ -88,10 +82,6 @@ static inline int __down_write_trylock(struct rw_semaphore *sem)
 
 	tmp = atomic_long_cmpxchg_acquire(&sem->count, RWSEM_UNLOCKED_VALUE,
 		      RWSEM_ACTIVE_WRITE_BIAS);
-#ifdef CONFIG_MMAP_LOCK_OPT
-	if(tmp == RWSEM_UNLOCKED_VALUE)
-                        uxchain_rwsem_down(sem);
-#endif
 	return tmp == RWSEM_UNLOCKED_VALUE;
 }
 
@@ -104,9 +94,6 @@ static inline void __up_read(struct rw_semaphore *sem)
 
 	tmp = atomic_long_dec_return_release(&sem->count);
 	if (unlikely(tmp < -1 && (tmp & RWSEM_ACTIVE_MASK) == 0)) {
-#ifdef CONFIG_MMAP_LOCK_OPT
-	uxchain_rwsem_up(sem);
-#endif
 		rwsem_wake(sem);
 	}
 }
@@ -118,9 +105,6 @@ static inline void __up_write(struct rw_semaphore *sem)
 {
 	if (unlikely(atomic_long_sub_return_release(RWSEM_ACTIVE_WRITE_BIAS,
 						    &sem->count) < 0)) {
-#ifdef CONFIG_MMAP_LOCK_OPT
-	uxchain_rwsem_up(sem);
-#endif
 		rwsem_wake(sem);
 	}
 }

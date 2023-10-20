@@ -209,21 +209,6 @@ struct task_group;
 
 #endif
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-extern int sysctl_sched_assist_enabled;
-extern int sysctl_sched_assist_scene;
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-extern int sysctl_cpu_multi_thread;
-#endif
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-extern int sysctl_slide_boost_enabled;
-extern int sysctl_input_boost_enabled;
-extern int sched_assist_ib_duration_coedecay;
-extern u64 sched_assist_input_boost_duration;
-extern int sysctl_boost_task_threshold;
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
 /* Task command name length: */
 #define TASK_COMM_LEN			16
 
@@ -811,7 +796,6 @@ struct task_struct {
 	int				boost;
 	u64				boost_period;
 	u64				boost_expires;
-
 #ifdef CONFIG_SCHED_WALT
 	struct ravg ravg;
 	/*
@@ -1396,20 +1380,6 @@ struct task_struct {
 	/* Used by LSM modules for access restriction: */
 	void				*security;
 #endif
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	int ux_state;
-	atomic64_t inherit_ux;
-	struct list_head ux_entry;
-	int ux_depth;
-	u64 enqueue_time;
-	u64 inherit_ux_start;
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-#if defined(OPLUS_FEATURE_SCHED_ASSIST) && defined(CONFIG_MMAP_LOCK_OPT)
-//#ifdef CONFIG_UXCHAIN_V2
-	int ux_once;
-	u64 get_mmlock_ts;
-	int get_mmlock;
-#endif
 #ifdef OPLUS_FEATURE_HEALTHINFO
 #ifdef CONFIG_OPLUS_JANK_INFO
 	int jank_trace;
@@ -1445,7 +1415,6 @@ struct task_struct {
 	 * Do not put anything below here!
 	 */
 };
-
 
 static inline struct pid *task_pid(struct task_struct *task)
 {
@@ -1863,10 +1832,6 @@ extern void kick_process(struct task_struct *tsk);
 static inline void kick_process(struct task_struct *tsk) { }
 #endif
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-extern void sched_assist_target_comm(struct task_struct *task);
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
 #ifdef CONFIG_OPLUS_ION_BOOSTPOOL
 extern pid_t alloc_svc_tgid;
 #endif
@@ -1875,9 +1840,6 @@ extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec
 static inline void set_task_comm(struct task_struct *tsk, const char *from)
 {
 	__set_task_comm(tsk, from, false);
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-	sched_assist_target_comm(tsk);
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
 #ifdef CONFIG_OPLUS_ION_BOOSTPOOL
 	if (!strncmp(from, "allocator-servi", TASK_COMM_LEN))
 		alloc_svc_tgid = tsk->tgid;

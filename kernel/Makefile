@@ -123,14 +123,6 @@ obj-$(CONFIG_TORTURE_TEST) += torture.o
 
 obj-$(CONFIG_HAS_IOMEM) += memremap.o
 
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-obj-y += sched_assist/
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
-#ifdef OPLUS_FEATURE_SCHED_ASSIST
-obj-y += special_opt/
-#endif /* OPLUS_FEATURE_SCHED_ASSIST */
-
 $(obj)/configs.o: $(obj)/config_data.h
 
 targets += config_data.gz

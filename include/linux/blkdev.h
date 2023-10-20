@@ -777,7 +777,7 @@ static inline void queue_flag_clear(unsigned int flag, struct request_queue *q)
 static inline void ohm_ioqueue_add_inflight(struct request_queue *q,
 					     struct request *rq)
 {
-	if (rq->cmd_flags & REQ_FG)
+	if (rq->cmd_flags)
 		q->in_flight[BLK_RW_FG]++;
 	else
 		q->in_flight[BLK_RW_BG]++;
@@ -786,7 +786,7 @@ static inline void ohm_ioqueue_add_inflight(struct request_queue *q,
 static inline void ohm_ioqueue_dec_inflight(struct request_queue *q,
 					     struct request *rq)
 {
-	if (rq->cmd_flags & REQ_FG)
+	if (rq->cmd_flags)
 		q->in_flight[BLK_RW_FG]--;
 	else
 		q->in_flight[BLK_RW_BG]--;

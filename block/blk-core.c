@@ -51,10 +51,6 @@
 #include <linux/iomonitor/iomonitor.h>
 #endif /*OPLUS_FEATURE_IOMONITOR*/
 
-#ifdef OPLUS_FEATURE_UIFIRST
-#include <linux/uifirst/uifirst_sched_common.h>
-#endif /*OPLUS_FEATURE_UIFIRST*/
-
 #ifdef CONFIG_DEBUG_FS
 struct dentry *blk_debugfs_root;
 #endif
@@ -1905,11 +1901,6 @@ void blk_init_request_from_bio(struct request *req, struct bio *bio)
 	if (bio->bi_opf & REQ_RAHEAD)
 		req->cmd_flags |= REQ_FAILFAST_MASK;
 
-#ifdef OPLUS_FEATURE_UIFIRST
-	if (bio->bi_opf & REQ_UX)
-		req->cmd_flags |= REQ_UX;
-#endif /*OPLUS_FEATURE_UIFIRST*/
-
 	req->__sector = bio->bi_iter.bi_sector;
 	if (ioprio_valid(bio_prio(bio)))
 		req->ioprio = bio_prio(bio);
@@ -2467,11 +2458,6 @@ blk_qc_t submit_bio(struct bio *bio)
 	 */
 	if (workingset_read)
 		psi_memstall_enter(&pflags);
-
-#ifdef OPLUS_FEATURE_UIFIRST
-	if (test_task_ux(current))
-		bio->bi_opf |= REQ_UX;
-#endif /*OPLUS_FEATURE_UIFIRST*/
 
 	ret = generic_make_request(bio);
 

@@ -77,10 +77,6 @@ int suid_dumpable = 0;
 static LIST_HEAD(formats);
 static DEFINE_RWLOCK(binfmt_lock);
 
-#ifdef OPLUS_FEATURE_UIFIRST
-extern pid_t allocator_pid;
-#endif
-
 void __register_binfmt(struct linux_binfmt * fmt, int insert)
 {
 	BUG_ON(!fmt);
