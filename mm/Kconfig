@@ -852,10 +852,6 @@ config FORCE_ALLOC_FROM_DMA_ZONE
 
 	  If unsure, say "n".
 
-#ifdef OPLUS_FEATURE_HEALTHINFO
-source "mm/oplus_healthinfo/Kconfig"
-#endif /* OPLUS_FEATURE_HEALTHINFO */
-
 #ifdef OPLUS_FEATURE_MULTI_FREEAREA
 config PHYSICAL_ANTI_FRAGMENTATION
 	bool "Physical memory anti-fragmentation"
@@ -869,11 +865,3 @@ config DAYAMIC_TUNNING_SWAPPINESS
 	default n
 	help
 	  tunning swappiess depends on file_pages size
-
-#ifdef OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY
-config VIRTUAL_RESERVE_MEMORY
-	bool "reserved vma for gpu emergency mmap"
-	default y
-	help
-	 support reserved vma for gpu emergency mmap.
-#endif /* OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY */

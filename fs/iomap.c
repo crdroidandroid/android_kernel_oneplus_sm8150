@@ -28,9 +28,6 @@
 #include <linux/task_io_accounting_ops.h>
 #include <linux/dax.h>
 #include <linux/sched/signal.h>
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-#include <linux/iomonitor/iomonitor.h>
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 
 #include "internal.h"
 
@@ -932,9 +929,6 @@ iomap_dio_actor(struct inode *inode, loff_t pos, loff_t length,
 		if (dio->flags & IOMAP_DIO_WRITE) {
 			bio_set_op_attrs(bio, REQ_OP_WRITE, REQ_SYNC | REQ_IDLE);
 			task_io_account_write(bio->bi_iter.bi_size);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-			iomonitor_update_rw_stats(DIO_WRITE, NULL, n);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 		} else {
 			bio_set_op_attrs(bio, REQ_OP_READ, 0);
 			if (dio->flags & IOMAP_DIO_DIRTY)

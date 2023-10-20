@@ -47,23 +47,9 @@
 
 #include <linux/math64.h>
 
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-#include <linux/iomonitor/iomonitor.h>
-#endif /*OPLUS_FEATURE_IOMONITOR*/
-
 #ifdef CONFIG_DEBUG_FS
 struct dentry *blk_debugfs_root;
 #endif
-
-#if defined(VENDOR_EDIT) && defined(CONFIG_OPLUS_HEALTHINFO)
-extern void ohm_iolatency_record(struct request * req,unsigned int nr_bytes, int fg, u64 delta_us);
-extern unsigned long ufs_outstanding;
-static u64 latency_count;
-static u32 io_print_count;
-bool       io_print_flag;
-#define    PRINT_LATENCY     500*1000
-#define    COUNT_TIME      24*60*60*1000
-#endif /*VENDOR_EDIT*/
 
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_bio_remap);
 EXPORT_TRACEPOINT_SYMBOL_GPL(block_rq_remap);
@@ -1390,9 +1376,6 @@ out:
 	 */
 	if (ioc_batching(q, ioc))
 		ioc->nr_batch_requests--;
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	iomonitor_init_reqstats(rq);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	trace_block_getrq(q, bio, op);
 	return rq;
 
@@ -2427,17 +2410,11 @@ blk_qc_t submit_bio(struct bio *bio)
 
 		if (op_is_write(bio_op(bio))) {
 			count_vm_events(PGPGOUT, count);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-			iomonitor_update_vm_stats(PGPGOUT, count);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 		} else {
 			if (bio_flagged(bio, BIO_WORKINGSET))
 				workingset_read = true;
 			task_io_account_read(bio->bi_iter.bi_size);
 			count_vm_events(PGPGIN, count);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-			iomonitor_update_vm_stats(PGPGIN, count);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 		}
 
 		if (unlikely(block_dump)) {
@@ -2746,10 +2723,6 @@ struct request *blk_peek_request(struct request_queue *q)
 			rq-> block_io_start = ktime_get();
 #endif
 
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-			rq->req_td = ktime_get();
-#endif /*OPLUS_FEATURE_IOMONITOR*/
-
 			trace_block_rq_issue(q, rq);
 		}
 
@@ -2810,9 +2783,6 @@ struct request *blk_peek_request(struct request_queue *q)
 			break;
 		}
 	}
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	iomonitor_record_io_history(rq);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	return rq;
 }
 EXPORT_SYMBOL(blk_peek_request);
@@ -2833,12 +2803,6 @@ static void blk_dequeue_request(struct request *rq)
 	if (blk_account_rq(rq)) {
 		q->in_flight[rq_is_sync(rq)]++;
 		set_io_start_time_ns(rq);
-#ifdef OPLUS_FEATURE_HEALTHINFO
-// Add for ioqueue
-#ifdef CONFIG_OPLUS_HEALTHINFO
-		ohm_ioqueue_add_inflight(q, rq);
-#endif
-#endif /* OPLUS_FEATURE_HEALTHINFO */
 	}
 }
 
@@ -2920,50 +2884,7 @@ bool blk_update_request(struct request *req, blk_status_t error,
 		unsigned int nr_bytes)
 {
 	int total_bytes;
-#if defined(VENDOR_EDIT) && defined(CONFIG_OPLUS_HEALTHINFO)
-	ktime_t now;
-	u64 delta_us;
-	char rwbs[RWBS_LEN];
-#endif
-
 	trace_block_rq_complete(req, blk_status_to_errno(error), nr_bytes);
-
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	iomonitor_record_reqstats(req, nr_bytes);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
-
-#if defined(VENDOR_EDIT) && defined(CONFIG_OPLUS_HEALTHINFO)
-			if(req->tag >= 0 && req->block_io_start > 0)
-			{
-				io_print_flag = false;
-				now = ktime_get();
-				delta_us = ktime_us_delta(now, req->block_io_start);
-				//by xuweijie ohm_iolatency_record(req, nr_bytes, current_is_fg(), ktime_us_delta(now, req->block_io_start));
-				trace_block_time(req->q, req, delta_us, nr_bytes);
-
-				if(delta_us > PRINT_LATENCY) { 
-					if((ktime_to_ms(now)) < COUNT_TIME){
-						latency_count ++;
-					}else{
-						latency_count = 0;
-					}
-					io_print_flag = true;
-					blk_fill_rwbs(rwbs,req->cmd_flags, nr_bytes);
-
-					/*if log is continuous, printk the first log.*/
-					if(!io_print_count)
-					  pr_info("[IO Latency]UID:%u,slot:%d,outstanding=0x%lx,IO_Type:%s,Block IO/Flash Latency:(%llu/%llu)LBA:%llu,length:%d size:%d,count=%lld\n",
-							(from_kuid_munged(current_user_ns(),current_uid())),
-							req->tag,ufs_outstanding,rwbs,delta_us,req->flash_io_latency,
-							(unsigned long long)blk_rq_pos(req),
-							nr_bytes >> 9,blk_rq_bytes(req),latency_count);
-					io_print_count++;
-				}
-
-				if(!io_print_flag && io_print_count)
-					io_print_count = 0;
-			}
-#endif
 
 	if (!req->bio)
 		return false;

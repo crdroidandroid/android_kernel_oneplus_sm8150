@@ -28,12 +28,6 @@
 #include <linux/mm_types_task.h>
 #include <linux/task_io_accounting.h>
 
-#ifdef OPLUS_FEATURE_HEALTHINFO
-#ifdef CONFIG_OPLUS_JANK_INFO
-#include <linux/oplus_healthinfo/oplus_jank_monitor.h>
-#endif
-#endif /* OPLUS_FEATURE_HEALTHINFO */
-
 /* task_struct member predeclarations (sorted alphabetically): */
 struct audit_context;
 struct backing_dev_info;
@@ -1370,18 +1364,6 @@ struct task_struct {
 	/* Used by LSM modules for access restriction: */
 	void				*security;
 #endif
-#ifdef OPLUS_FEATURE_HEALTHINFO
-#ifdef CONFIG_OPLUS_JANK_INFO
-	int jank_trace;
-	struct oplus_jank_monitor_info oplus_jank_info;
-	unsigned in_mutex:1;
-	unsigned in_downread:1;
-	unsigned in_downwrite:1;
-	unsigned in_futex:1;
-	unsigned in_binder:1;
-	unsigned in_epoll:1;
-#endif
-#endif /* OPLUS_FEATURE_HEALTHINFO */
 
 	struct {
 		struct work_struct work;
@@ -1817,18 +1799,10 @@ extern void kick_process(struct task_struct *tsk);
 static inline void kick_process(struct task_struct *tsk) { }
 #endif
 
-#ifdef CONFIG_OPLUS_ION_BOOSTPOOL
-extern pid_t alloc_svc_tgid;
-#endif
-
 extern void __set_task_comm(struct task_struct *tsk, const char *from, bool exec);
 static inline void set_task_comm(struct task_struct *tsk, const char *from)
 {
 	__set_task_comm(tsk, from, false);
-#ifdef CONFIG_OPLUS_ION_BOOSTPOOL
-	if (!strncmp(from, "allocator-servi", TASK_COMM_LEN))
-		alloc_svc_tgid = tsk->tgid;
-#endif
 }
 
 extern char *__get_task_comm(char *to, size_t len, struct task_struct *tsk);

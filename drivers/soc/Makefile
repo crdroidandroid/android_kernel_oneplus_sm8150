@@ -25,16 +25,9 @@ obj-$(CONFIG_PLAT_VERSATILE)	+= versatile/
 obj-$(CONFIG_ARCH_ZX)		+= zte/
 obj-y                           += oplus/
 
-#ifdef OPLUS_FEATURE_IOMONITOR
-obj-$(CONFIG_IOMONITOR)    +=  oplus/iomonitor/
-#endif /*OPLUS_FEATURE_IOMONITOR*/
-
 #ifdef VENDOR_EDIT
 obj-y				+= oplus/
 #endif
-#ifdef OPLUS_FEATURE_HEALTHINFO
-obj-y     +=  oplus/oplus_healthinfo/
-#endif /* OPLUS_FEATURE_HEALTHINFO */
 
 #ifdef OPLUS_FEATURE_SENSOR_SMEM
 obj-y                     += oplus/sensor/

@@ -106,14 +106,6 @@ obj-$(CONFIG_PERCPU_STATS) += percpu-stats.o
 obj-$(CONFIG_HMM) += hmm.o
 obj-$(CONFIG_PROCESS_RECLAIM)	+= process_reclaim.o
 
-#ifdef OPLUS_FEATURE_HEALTHINFO
-obj-y += oplus_healthinfo/
-#endif /* OPLUS_FEATURE_HEALTHINFO */
-
 #if defined(OPLUS_FEATURE_MULTI_FREEAREA)
 obj-$(CONFIG_PHYSICAL_ANTI_FRAGMENTATION) += multi_freearea.o
 #endif
-
-#if defined(OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY)
-obj-$(CONFIG_VIRTUAL_RESERVE_MEMORY) += reserve_area.o
-#endif /*defined(OPLUS_FEATURE_VIRTUAL_RESERVE_MEMORY)

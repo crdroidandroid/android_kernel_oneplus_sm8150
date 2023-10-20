@@ -24,12 +24,6 @@
 
 #include <linux/uaccess.h>
 #include <asm/unistd.h>
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-#include <linux/iomonitor/iomonitor.h>
-#include <linux/iomonitor/iotrace.h>
-DEFINE_TRACE(syscall_read_timeout);
-DEFINE_TRACE(syscall_write_timeout);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 
 const struct file_operations generic_ro_fops = {
 	.llseek		= generic_file_llseek,
@@ -431,9 +425,6 @@ ssize_t kernel_read(struct file *file, void *buf, size_t count, loff_t *pos)
 	/* The cast to a user pointer is valid due to the set_fs() */
 	result = vfs_read(file, (void __user *)buf, count, pos);
 	set_fs(old_fs);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	iomonitor_update_rw_stats(KERNEL_READ, file, result);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	return result;
 }
 EXPORT_SYMBOL(kernel_read);
@@ -527,10 +518,6 @@ ssize_t __kernel_write(struct file *file, const void *buf, size_t count, loff_t 
 		fsnotify_modify(file);
 		add_wchar(current, ret);
 	}
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(KERNEL_WRITE, file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscw(current);
 	return ret;
 }
@@ -547,9 +534,6 @@ ssize_t kernel_write(struct file *file, const void *buf, size_t count,
 	/* The cast to a user pointer is valid due to the set_fs() */
 	res = vfs_write(file, (__force const char __user *)buf, count, pos);
 	set_fs(old_fs);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	iomonitor_update_rw_stats(KERNEL_WRITE, file, res);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	return res;
 }
 EXPORT_SYMBOL(kernel_write);
@@ -599,20 +583,11 @@ SYSCALL_DEFINE3(read, unsigned int, fd, char __user *, buf, size_t, count)
 {
 	struct fd f = fdget_pos(fd);
 	ssize_t ret = -EBADF;
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	unsigned long read_time = jiffies;
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	if (f.file) {
 		loff_t pos = file_pos_read(f.file);
 		ret = vfs_read(f.file, buf, count, &pos);
 		if (ret >= 0)
 			file_pos_write(f.file, pos);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-		if (ret > 0) {
-			iomonitor_update_rw_stats(USER_READ, f.file, ret);
-			trace_syscall_read_timeout(f.file, jiffies_to_msecs(jiffies - read_time));
-		}
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 		fdput_pos(f);
 	}
 	return ret;
@@ -623,20 +598,11 @@ SYSCALL_DEFINE3(write, unsigned int, fd, const char __user *, buf,
 {
 	struct fd f = fdget_pos(fd);
 	ssize_t ret = -EBADF;
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	unsigned long write_time = jiffies;
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	if (f.file) {
 		loff_t pos = file_pos_read(f.file);
 		ret = vfs_write(f.file, buf, count, &pos);
 		if (ret >= 0)
 			file_pos_write(f.file, pos);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-		if (ret > 0) {
-			iomonitor_update_rw_stats(USER_WRITE, f.file, ret);
-			trace_syscall_write_timeout(f.file, jiffies_to_msecs(jiffies - write_time));
-		}
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 		fdput_pos(f);
 	}
 
@@ -659,10 +625,6 @@ SYSCALL_DEFINE4(pread64, unsigned int, fd, char __user *, buf,
 			ret = vfs_read(f.file, buf, count, &pos);
 		fdput(f);
 	}
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_READ, f.file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	return ret;
 }
 
@@ -682,10 +644,6 @@ SYSCALL_DEFINE4(pwrite64, unsigned int, fd, const char __user *, buf,
 			ret = vfs_write(f.file, buf, count, &pos);
 		fdput(f);
 	}
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_WRITE, f.file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	return ret;
 }
 
@@ -1072,10 +1030,6 @@ static ssize_t do_readv(unsigned long fd, const struct iovec __user *vec,
 
 	if (ret > 0)
 		add_rchar(current, ret);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_READ, f.file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscr(current);
 	return ret;
 }
@@ -1096,10 +1050,6 @@ static ssize_t do_writev(unsigned long fd, const struct iovec __user *vec,
 
 	if (ret > 0)
 		add_wchar(current, ret);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_WRITE, f.file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscw(current);
 	return ret;
 }
@@ -1129,10 +1079,6 @@ static ssize_t do_preadv(unsigned long fd, const struct iovec __user *vec,
 
 	if (ret > 0)
 		add_rchar(current, ret);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_READ, f.file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscr(current);
 	return ret;
 }
@@ -1156,10 +1102,6 @@ static ssize_t do_pwritev(unsigned long fd, const struct iovec __user *vec,
 
 	if (ret > 0)
 		add_wchar(current, ret);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_WRITE, f.file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscw(current);
 	return ret;
 }
@@ -1233,10 +1175,6 @@ static size_t compat_readv(struct file *file,
 	}
 	if (ret > 0)
 		add_rchar(current, ret);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_READ, file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscr(current);
 	return ret;
 }
@@ -1347,10 +1285,6 @@ static size_t compat_writev(struct file *file,
 	}
 	if (ret > 0)
 		add_wchar(current, ret);
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0)
-		iomonitor_update_rw_stats(USER_WRITE, file, ret);
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscw(current);
 	return ret;
 }
@@ -1529,12 +1463,6 @@ static ssize_t do_sendfile(int out_fd, int in_fd, loff_t *ppos,
 		else
 			in.file->f_pos = pos;
 	}
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (retval > 0) {
-		iomonitor_update_rw_stats(USER_READ, in.file, retval);
-		iomonitor_update_rw_stats(USER_WRITE,in.file, retval);
-	}
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscr(current);
 	inc_syscw(current);
 	if (pos > max)
@@ -1697,12 +1625,6 @@ done:
 		fsnotify_modify(file_out);
 		add_wchar(current, ret);
 	}
-#if defined(OPLUS_FEATURE_IOMONITOR) && defined(CONFIG_IOMONITOR)
-	if (ret > 0) {
-		iomonitor_update_rw_stats(USER_READ, file_in, ret);
-		iomonitor_update_rw_stats(USER_WRITE,file_in, ret);
-	}
-#endif /*OPLUS_FEATURE_IOMONITOR*/
 	inc_syscr(current);
 	inc_syscw(current);
 
