@@ -106,14 +106,6 @@ obj-$(CONFIG_PERCPU_STATS) += percpu-stats.o
 obj-$(CONFIG_HMM) += hmm.o
 obj-$(CONFIG_PROCESS_RECLAIM)	+= process_reclaim.o
 
-#ifdef OPLUS_FEATURE_PROCESS_RECLAIM
-ifdef CONFIG_PROCESS_RECLAIM_ENHANCE
-obj-y += process_mm_reclaim.o
-else
-obj-y += process_mm_reclaim_weak.o
-endif
-#endif /* OPLUS_FEATURE_PROCESS_RECLAIM */
-
 #ifdef OPLUS_FEATURE_HEALTHINFO
 obj-y += oplus_healthinfo/
 #endif /* OPLUS_FEATURE_HEALTHINFO */
