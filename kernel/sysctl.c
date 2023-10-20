@@ -138,10 +138,6 @@ extern int direct_vm_swappiness;
 static int two_hundred = 200;
 #endif /*OPLUS_FEATURE_ZRAM_OPT*/
 
-#ifdef OPLUS_FEATURE_EDTASK_IMPROVE
-int sysctl_ed_task_enabled = 1;
-#endif
-
 static int one_thousand = 1000;
 
 #ifdef CONFIG_SCHED_WALT
@@ -487,15 +483,6 @@ static struct ctl_table kern_table[] = {
 		.mode		= 0644,
 		.proc_handler	= sched_updown_migrate_handler,
 	},
-#ifdef OPLUS_FEATURE_EDTASK_IMPROVE
-	{
-		.procname   = "ed_task_enabled",
-		.data       = &sysctl_ed_task_enabled,
-		.maxlen     = sizeof(int),
-		.mode       = 0666,
-		.proc_handler = proc_dointvec,
-	},
-#endif
 #ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
 {
 		.procname	= "ext4_fsync_enable",

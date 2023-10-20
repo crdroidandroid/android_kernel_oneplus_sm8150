@@ -774,24 +774,6 @@ migrate_top_tasks(struct task_struct *p, struct rq *src_rq, struct rq *dst_rq)
 	}
 }
 
-#ifdef OPLUS_FEATURE_EDTASK_IMPROVE
-void migrate_ed_task(struct task_struct *p, u64 wallclock,
-		struct rq *src_rq, struct rq *dest_rq)
-{
-	int src_cpu = cpu_of(src_rq);
-	int dest_cpu = cpu_of(dest_rq);
-
-	/* For ed task, reset last_wake_ts if task migrate to faster cpu */
-	if (capacity_orig_of(src_cpu) < capacity_orig_of(dest_cpu)) {
-		p->last_wake_ts = wallclock;
-		if(dest_rq->ed_task == p) {
-			dest_rq->ed_task = NULL;
-		}
-	}
-}
-extern int sysctl_ed_task_enabled;
-#endif
-
 void fixup_busy_time(struct task_struct *p, int new_cpu)
 {
 	struct rq *src_rq = task_rq(p);
@@ -909,12 +891,6 @@ void fixup_busy_time(struct task_struct *p, int new_cpu)
 			dest_rq->ed_task = p;
 		}
 	}
-
-#ifdef OPLUS_FEATURE_EDTASK_IMPROVE
-	if (sysctl_ed_task_enabled) {
-		migrate_ed_task(p, wallclock, src_rq, dest_rq);
-	}
-#endif
 
 done:
 	if (p->state == TASK_WAKING)
