@@ -44,13 +44,6 @@
 #define NETLINK_OPLUS_SLA  33      /*SLA NETLINK SOCK*/
 //#endif /* OPLUS_FEATURE_WIFI_SLA */
 
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-/*
-*Add for classify glink wakeup services and count IPA wakeup
-*/
-#define NETLINK_OPLUS_NWPOWERSTATE       36  /*OPLUS NW PowerState*/
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
-
 //#ifdef OPLUS_FEATURE_DHCP
 #define NETLINK_OPLUS_DHCP 38
 //#endif /* OPLUS_FEATURE_DHCP */

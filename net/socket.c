@@ -437,14 +437,6 @@ struct file *sock_alloc_file(struct socket *sock, int flags, const char *dname)
 	sock->file = file;
 	file->f_flags = O_RDWR | (flags & O_NONBLOCK);
 	file->private_data = sock;
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-    /*
-    *Add for classify glink wakeup services
-    */
-    if (sock->sk) {
-        sock->sk->sk_oplus_pid = current->tgid;
-    }
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
 	return file;
 }
 EXPORT_SYMBOL(sock_alloc_file);

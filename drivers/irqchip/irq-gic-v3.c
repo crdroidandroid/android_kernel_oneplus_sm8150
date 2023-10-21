@@ -51,13 +51,6 @@
 #include "../../drivers/soc/oplus/owakelock/oplus_wakelock_profiler_qcom.h"
 #endif /* OPLUS_FEATURE_POWERINFO_STANDBY */
 
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-/*
-*Add for: print qrtr debug msg and fix QMI wakeup statistics for QCOM platforms using glink.
-*/
-int qrtr_first_msg = 0;
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
-
 struct redist_region {
 	void __iomem		*redist_base;
 	phys_addr_t		phys_base;

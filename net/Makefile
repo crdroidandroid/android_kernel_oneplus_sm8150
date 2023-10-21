@@ -107,11 +107,6 @@ ifneq ($(OPLUS_FEATURE_DHCP),)
 obj-y				+= oplus_dhcp/
 endif #/* OPLUS_FEATURE_DHCP */
 
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-#Add for classify glink wakeup services and count IPA wakeup.
-obj-y               += oplus_nwpower/
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
-
 #ifdef OPLUS_FEATURE_WIFI_CAPCENTER
 obj-$(CONFIG_OPLUS_FEATURE_WIFI_CAPCENTER) += oplus_wificapcenter/
 #endif /* OPLUS_FEATURE_WIFI_CAPCENTER */

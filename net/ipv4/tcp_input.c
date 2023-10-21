@@ -124,15 +124,6 @@ int sysctl_tcp_invalid_ratelimit __read_mostly = HZ/2;
 #define REXMIT_NONE	0 /* no loss recovery to do */
 #define REXMIT_LOST	1 /* retransmit packets marked lost */
 #define REXMIT_NEW	2 /* FRTO-style transmit of unsent/new packets */
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-/*
-*Add for classify glink wakeup services
-*/
-#include <net/oplus_nwpower.h>
-extern atomic_t tcpsynretrans_hook_boot;
-extern struct work_struct oplus_tcp_input_tcpsynretrans_hook_work;
-extern struct oplus_tcp_hook_struct oplus_tcp_input_tcpsynretrans_hook;
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
 
 static void tcp_gro_dev_warn(struct sock *sk, const struct sk_buff *skb,
 			     unsigned int len)
@@ -4729,12 +4720,6 @@ static void tcp_data_queue(struct sock *sk, struct sk_buff *skb)
 	struct tcp_sock *tp = tcp_sk(sk);
 	bool fragstolen;
 	int eaten;
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-	/*
-	*Add for classify glink wakeup services
-	*/
-	struct timespec now_ts;
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
 
 	if (TCP_SKB_CB(skb)->seq == TCP_SKB_CB(skb)->end_seq) {
 		__kfree_skb(skb);
@@ -4793,29 +4778,6 @@ queue_and_out:
 
 	if (!after(TCP_SKB_CB(skb)->end_seq, tp->rcv_nxt)) {
 		/* A retransmit, 2nd most common case.  Force an immediate ack. */
-#ifdef OPLUS_FEATURE_MODEM_DATA_NWPOWER
-		/*
-		*Add for classify glink wakeup services
-		*/
-		if (atomic_read(&tcpsynretrans_hook_boot) == 1) {
-			now_ts = current_kernel_time();
-			if (((now_ts.tv_sec * 1000 + now_ts.tv_nsec / 1000000) - sk->oplus_last_rcv_stamp[0]) > OPLUS_TCP_RETRANSMISSION_INTERVAL) {
-				if (sk->sk_v6_daddr.s6_addr32[0] == 0 && sk->sk_v6_daddr.s6_addr32[1] == 0) {
-					oplus_tcp_input_tcpsynretrans_hook.ipv4_addr = sk->sk_daddr;
-					oplus_tcp_input_tcpsynretrans_hook.is_ipv6 = false;
-					schedule_work(&oplus_tcp_input_tcpsynretrans_hook_work);
-				} else {
-					oplus_tcp_input_tcpsynretrans_hook.ipv6_addr1 = (u64)ntohl(sk->sk_v6_daddr.s6_addr32[0]) << 32 | ntohl(sk->sk_v6_daddr.s6_addr32[1]);
-					oplus_tcp_input_tcpsynretrans_hook.ipv6_addr2 = (u64)ntohl(sk->sk_v6_daddr.s6_addr32[2]) << 32 | ntohl(sk->sk_v6_daddr.s6_addr32[3]);
-					oplus_tcp_input_tcpsynretrans_hook.is_ipv6 = true;
-					schedule_work(&oplus_tcp_input_tcpsynretrans_hook_work);
-				}
-				oplus_tcp_input_tcpsynretrans_hook.uid = get_uid_from_sock(sk);
-				oplus_tcp_input_tcpsynretrans_hook.pid = sk->sk_oplus_pid;
-			}
-		}
-#endif /* OPLUS_FEATURE_MODEM_DATA_NWPOWER */
-
 		NET_INC_STATS(sock_net(sk), LINUX_MIB_DELAYEDACKLOST);
 		tcp_dsack_set(sk, TCP_SKB_CB(skb)->seq, TCP_SKB_CB(skb)->end_seq);
 
