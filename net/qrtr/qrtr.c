@@ -135,17 +135,14 @@ static DECLARE_RWSEM(qrtr_node_lock);
 static DEFINE_IDR(qrtr_ports);
 static DEFINE_MUTEX(qrtr_port_lock);
 
-//#ifdef OPLUS_BUG_COMPATIBILITY
 /* backup buffers */
-#define QRTR_BACKUP_HI_NUM 5
-#define QRTR_BACKUP_HI_SIZE SZ_16K
-#define QRTR_BACKUP_LO_NUM 20
-#define QRTR_BACKUP_LO_SIZE SZ_1K
+#define QRTR_BACKUP_HI_NUM	5
+#define QRTR_BACKUP_HI_SIZE	SZ_16K
+#define QRTR_BACKUP_LO_NUM	20
+#define QRTR_BACKUP_LO_SIZE	SZ_1K
 static struct sk_buff_head qrtr_backup_lo;
 static struct sk_buff_head qrtr_backup_hi;
 static struct work_struct qrtr_backup_work;
-//#endif OPLUS_BUG_COMPATIBILITY
-
 
 /**
  * struct qrtr_node - endpoint node
@@ -240,9 +237,6 @@ static void qrtr_log_tx_msg(struct qrtr_node *node, struct qrtr_hdr_v1 *hdr,
 		skb_copy_bits(skb, QRTR_HDR_MAX_SIZE, &pkt, sizeof(pkt));
 		if (type == QRTR_TYPE_NEW_SERVER ||
 		    type == QRTR_TYPE_DEL_SERVER)
-			/*
-			*Add for classify glink wakeup services.
-			*/
 			QRTR_INFO(node->ilc,
 				  "TX CTRL: cmd:0x%x SVC[0x%x:0x%x] addr[0x%x:0x%x]\n",
 				  type, le32_to_cpu(pkt.server.service),
@@ -294,9 +288,6 @@ static void qrtr_log_rx_msg(struct qrtr_node *node, struct sk_buff *skb)
 		skb_copy_bits(skb, 0, &pkt, sizeof(pkt));
 		if (cb->type == QRTR_TYPE_NEW_SERVER ||
 		    cb->type == QRTR_TYPE_DEL_SERVER)
-			/*
-			*Add for classify glink wakeup services.
-			*/
 			QRTR_INFO(node->ilc,
 				  "RX CTRL: cmd:0x%x SVC[0x%x:0x%x] addr[0x%x:0x%x]\n",
 				  cb->type, le32_to_cpu(pkt.server.service),
@@ -712,60 +703,58 @@ int qrtr_peek_pkt_size(const void *data)
 }
 EXPORT_SYMBOL(qrtr_peek_pkt_size);
 
-//#ifdef OPLUS_BUG_COMPATIBILITY
 static void qrtr_alloc_backup(struct work_struct *work)
 {
- struct sk_buff *skb;
- int errcode;
+	struct sk_buff *skb;
+	int errcode;
 
- while (skb_queue_len(&qrtr_backup_lo) < QRTR_BACKUP_LO_NUM) {
- skb = alloc_skb_with_frags(sizeof(struct qrtr_hdr_v1),
- QRTR_BACKUP_LO_SIZE, 0, &errcode,
- GFP_KERNEL);
- if (!skb)
- break;
- skb_queue_tail(&qrtr_backup_lo, skb);
- }
- while (skb_queue_len(&qrtr_backup_hi) < QRTR_BACKUP_HI_NUM) {
- skb = alloc_skb_with_frags(sizeof(struct qrtr_hdr_v1),
- QRTR_BACKUP_HI_SIZE, 0, &errcode,
- GFP_KERNEL);
- if (!skb)
- break;
- skb_queue_tail(&qrtr_backup_hi, skb);
- }
+	while (skb_queue_len(&qrtr_backup_lo) < QRTR_BACKUP_LO_NUM) {
+		skb = alloc_skb_with_frags(sizeof(struct qrtr_hdr_v1),
+					   QRTR_BACKUP_LO_SIZE, 0, &errcode,
+					   GFP_KERNEL);
+		if (!skb)
+			break;
+		skb_queue_tail(&qrtr_backup_lo, skb);
+	}
+	while (skb_queue_len(&qrtr_backup_hi) < QRTR_BACKUP_HI_NUM) {
+		skb = alloc_skb_with_frags(sizeof(struct qrtr_hdr_v1),
+					   QRTR_BACKUP_HI_SIZE, 0, &errcode,
+					   GFP_KERNEL);
+		if (!skb)
+			break;
+		skb_queue_tail(&qrtr_backup_hi, skb);
+	}
 }
 
 static struct sk_buff *qrtr_get_backup(size_t len)
 {
- struct sk_buff *skb = NULL;
+	struct sk_buff *skb = NULL;
 
- if (len < QRTR_BACKUP_LO_SIZE)
- skb = skb_dequeue(&qrtr_backup_lo);
- else if (len < QRTR_BACKUP_HI_SIZE)
- skb = skb_dequeue(&qrtr_backup_hi);
+	if (len < QRTR_BACKUP_LO_SIZE)
+		skb = skb_dequeue(&qrtr_backup_lo);
+	else if (len < QRTR_BACKUP_HI_SIZE)
+		skb = skb_dequeue(&qrtr_backup_hi);
 
- if (skb)
- queue_work(system_unbound_wq, &qrtr_backup_work);
+	if (skb)
+		queue_work(system_unbound_wq, &qrtr_backup_work);
 
- return skb;
+	return skb;
 }
 
 static void qrtr_backup_init(void)
 {
- skb_queue_head_init(&qrtr_backup_lo);
- skb_queue_head_init(&qrtr_backup_hi);
- INIT_WORK(&qrtr_backup_work, qrtr_alloc_backup);
- queue_work(system_unbound_wq, &qrtr_backup_work);
+	skb_queue_head_init(&qrtr_backup_lo);
+	skb_queue_head_init(&qrtr_backup_hi);
+	INIT_WORK(&qrtr_backup_work, qrtr_alloc_backup);
+	queue_work(system_unbound_wq, &qrtr_backup_work);
 }
 
 static void qrtr_backup_deinit(void)
 {
- cancel_work_sync(&qrtr_backup_work);
- skb_queue_purge(&qrtr_backup_lo);
- skb_queue_purge(&qrtr_backup_hi);
+	cancel_work_sync(&qrtr_backup_work);
+	skb_queue_purge(&qrtr_backup_lo);
+	skb_queue_purge(&qrtr_backup_hi);
 }
-//#endif OPLUS_BUG_COMPATIBILITY
 
 /**
  * qrtr_endpoint_post() - post incoming data
@@ -791,18 +780,13 @@ int qrtr_endpoint_post(struct qrtr_endpoint *ep, const void *data, size_t len)
 		return -EINVAL;
 
 	skb = alloc_skb_with_frags(sizeof(*v1), len, 0, &errcode, GFP_ATOMIC);
-	if (!skb)
-        //#ifdef OPLUS_BUG_COMPATIBILITY
-           {
-           skb = qrtr_get_backup(len);
-           if (!skb) {
-              pr_err("qrtr: Unable to get skb with len:%lu\n", len);
-        //#endif OPLUS_BUG_COMPATIBILITY
-              return -ENOMEM;
-        //#ifdef OPLUS_BUG_COMPATIBILITY
-                     }
-            }
-        //#endif OPLUS_BUG_COMPATIBILITY
+	if (!skb) {
+		skb = qrtr_get_backup(len);
+		if (!skb) {
+			pr_err("qrtr: Unable to get skb with len:%lu\n", len);
+			return -ENOMEM;
+		}
+	}
 
 	skb_reserve(skb, sizeof(*v1));
 	cb = (struct qrtr_cb *)skb->cb;
@@ -2038,10 +2022,11 @@ static int __init qrtr_proto_init(void)
 	}
 
 	rtnl_register(PF_QIPCRTR, RTM_NEWADDR, qrtr_addr_doit, NULL, 0);
-        //#ifdef OPLUS_BUG_COMPATIBILITY
-        qrtr_backup_init();
-        //#endif OPLUS_BUG_COMPATIBILITY
+
+	qrtr_backup_init();
+
 	return 0;
+
 }
 postcore_initcall(qrtr_proto_init);
 
@@ -2050,9 +2035,8 @@ static void __exit qrtr_proto_fini(void)
 	rtnl_unregister(PF_QIPCRTR, RTM_NEWADDR);
 	sock_unregister(qrtr_family.family);
 	proto_unregister(&qrtr_proto);
-        //#ifdef OPLUS_BUG_COMPATIBILITY
-        qrtr_backup_deinit();
-        //#endif OPLUS_BUG_COMPATIBILITY
+
+	qrtr_backup_deinit();
 }
 module_exit(qrtr_proto_fini);
 
