@@ -703,7 +703,6 @@ static int zy0603_protect_check(void)
 
 	/*printk(KERN_ERR "[%s] v12 unseal start\n", __func__);*/
 	if (!gauge_ic || (gauge_ic && !gauge_ic->batt_zy0603) || (gauge_ic && gauge_ic->afi_count == 0)) {
-		printk(KERN_ERR "[%s] return for %s\n", __func__, !gauge_ic ? "guage is null" : "is not zy0603 gauge");
 		return -1;
 	}
 
