@@ -92,10 +92,6 @@ enum {
 	FLUSH_PENDING_TIMEOUT	= 5 * HZ,
 };
 
-#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
-extern unsigned long sysctl_blkdev_issue_flush_count;
-#endif
-
 static bool blk_kick_flush(struct request_queue *q,
 			   struct blk_flush_queue *fq);
 
@@ -526,10 +522,6 @@ int blkdev_issue_flush(struct block_device *bdev, gfp_t gfp_mask,
 	 */
 	if (!q->make_request_fn)
 		return -ENXIO;
-
-#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
-		sysctl_blkdev_issue_flush_count++;
-#endif
 
 	bio = bio_alloc(gfp_mask, 0);
 	bio_set_dev(bio, bdev);

@@ -138,11 +138,6 @@ static int one_thousand = 1000;
 #ifdef CONFIG_SCHED_WALT
 static int two_million = 2000000;
 #endif
-#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
-unsigned int sysctl_ext4_fsync_enable = 1;
-unsigned int ext4_fsync_enable_status = 0;
-unsigned long sysctl_blkdev_issue_flush_count = 0;
-#endif /*CONFIG_OPLUS_FEATURE_PANIC_FLUSH*/
 #ifdef CONFIG_PRINTK
 static int ten_thousand = 10000;
 #endif
@@ -478,24 +473,6 @@ static struct ctl_table kern_table[] = {
 		.mode		= 0644,
 		.proc_handler	= sched_updown_migrate_handler,
 	},
-#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
-{
-		.procname	= "ext4_fsync_enable",
-		.data		= &sysctl_ext4_fsync_enable,
-		.maxlen		= sizeof(unsigned int),
-		.mode		= 0666,
-		.proc_handler	= proc_dointvec,
-},
-#endif
-#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
-{
-		.procname	= "blkdev_issue_flush_count",
-		.data		= &sysctl_blkdev_issue_flush_count,
-		.maxlen		= sizeof(unsigned long),
-		.mode		= 0644,
-		.proc_handler	= proc_dointvec,
-},
-#endif
 #ifdef CONFIG_SCHED_DEBUG
 	{
 		.procname	= "sched_min_granularity_ns",

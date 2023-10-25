@@ -102,14 +102,6 @@ static void *emergency_dload_mode_addr;
 static void __iomem *kaslr_imem_addr;
 #endif
 static bool scm_dload_supported;
-#ifdef CONFIG_OPLUS_FEATURE_PANIC_FLUSH
-int get_download_mode(void)
-{
-	return download_mode && (dload_type & SCM_DLOAD_FULLDUMP);
-}
-EXPORT_SYMBOL(get_download_mode);
-#endif
-
 static int dload_set(const char *val, const struct kernel_param *kp);
 /* interface for exporting attributes */
 struct reset_attribute {
