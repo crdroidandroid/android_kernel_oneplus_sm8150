@@ -101,10 +101,7 @@ static int oplus_nfc_probe(struct platform_device *pdev)
 	struct device_node *np;
 	struct device* dev;
 	unsigned int project;
-	unsigned int operator;
-	int readRet;
-	char prop_project[32];
-	char prop_project_operator[32];
+	char prop_name[32];
 	const char *chipset_node;
 	struct proc_dir_entry *p_entry;
 	static struct proc_dir_entry *nfc_info = NULL;
@@ -117,21 +114,25 @@ static int oplus_nfc_probe(struct platform_device *pdev)
 		goto error_init;
 	}
 	project = get_project();
-	operator = get_Operator_Version();
-	sprintf(prop_project_operator, "chipset-%d-%d", project, operator);
-	pr_err("%s, prop_project_operator to be read = %s", __func__, prop_project_operator);
-	readRet = of_property_read_string(dev->of_node, prop_project_operator, &chipset_node);
-	if (readRet != 0) {
-		sprintf(prop_project, "chipset-%d", project);
-		pr_err("%s, prop_project to be read = %s", __func__, prop_project);
-		readRet = of_property_read_string(dev->of_node, prop_project, &chipset_node);
+	//project name consists of 5-symbol
+	//project contains letters is big then 0x10000 == 65536
+	if (project > 0x10000)
+	{
+		snprintf(prop_name, sizeof(prop_name), "chipset-%X", project);
+	} else
+	{
+		snprintf(prop_name, sizeof(prop_name), "chipset-%u", project);
 	}
+	pr_err("%s, prop to be read = %s", __func__, prop_name);
 	np = dev->of_node;
-	if(readRet != 0) {
-		sprintf(current_chipset, "NULL");
-	} else {
+
+	if (of_property_read_string(dev->of_node, prop_name, &chipset_node))
+	{
+		snprintf(current_chipset, sizeof(current_chipset), "NULL");
+	} else
+	{
 		pr_err("%s, get chipset_node content = %s", __func__, chipset_node);
-		strcpy(current_chipset, chipset_node);
+		strncpy(current_chipset, chipset_node, sizeof(current_chipset));
 		support_nfc = true;
 	}
 
@@ -195,4 +196,3 @@ module_exit(oplus_nfc_exit);
 
 MODULE_DESCRIPTION("OPLUS nfc chipset version");
 MODULE_LICENSE("GPL v2");
-MODULE_AUTHOR("Yukun Wang");

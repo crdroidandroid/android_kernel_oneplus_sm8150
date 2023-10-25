@@ -793,7 +793,10 @@ static int p61_probe(struct spi_device *spi)
 {
     int ret = -1;
     struct p61_spi_platform_data *platform_data = NULL;
-    struct p61_spi_platform_data platform_data1;
+    struct p61_spi_platform_data platform_data1 = {
+        .irq_gpio = 0,
+        .rst_gpio = 0
+    };
     struct p61_dev *p61_dev = NULL;
 #ifdef P61_IRQ_ENABLE
     unsigned int irq_flags;
