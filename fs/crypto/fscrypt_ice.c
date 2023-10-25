@@ -10,7 +10,7 @@
  * GNU General Public License for more details.
  */
 
-#include "fscrypt_ice.h"
+#include <linux/fscrypt_ice.h>
 
 extern int fscrypt_get_mode_key_size(int mode);
 
