@@ -20,9 +20,5 @@ config OPLUS_DEVICE_IFNO
 source "drivers/soc/oplus/project_info/Kconfig"
 source "drivers/soc/oplus/device_info/Kconfig"
 
-#ifdef OPLUS_ARCH_EXTENDS
-source "drivers/soc/oplus/oplus_kevent_feedback/Kconfig"
-#endif /* OPLUS_ARCH_EXTENDS */
-
 source "drivers/soc/oplus/system/Kconfig"
 #endif /* VENDOR_EDIT */
