@@ -23,7 +23,6 @@
  */
 #include <linux/notifier.h>
 #include <linux/msm_drm_notify.h>
-#include "oplus_mm_kevent_fb.h"
 #include <soc/oplus/device_info.h>
 #include "dsi_pwr.h"
 
@@ -3425,7 +3424,6 @@ static int __init oplus_display_private_api_init(void)
 		return -ENOMEM;
 	}
 
-	mm_kevent_init();
 	/* Create the files associated with this kobject */
 	retval = sysfs_create_group(oplus_display_kobj, &oplus_display_attr_group);
 
@@ -3457,7 +3455,6 @@ error_remove_sysfs_group:
 error_remove_kobj:
 	kobject_put(oplus_display_kobj);
 	oplus_display_kobj = NULL;
-	mm_kevent_deinit();
 
 	return retval;
 }
@@ -3517,7 +3514,6 @@ static void __exit oplus_display_private_api_exit(void)
 	sysfs_remove_link(oplus_display_kobj, "panel");
 	sysfs_remove_group(oplus_display_kobj, &oplus_display_attr_group);
 	kobject_put(oplus_display_kobj);
-	mm_kevent_deinit();
 }
 
 module_init(oplus_display_private_api_init);

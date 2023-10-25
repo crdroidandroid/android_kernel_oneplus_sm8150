@@ -34,7 +34,6 @@
 #include "dsi_phy.h"
 #include "oplus_display_panel_seed.h"
 #ifdef OPLUS_BUG_STABILITY
-#include "oplus_mm_kevent_fb.h"
 #include <linux/msm_drm_notify.h>
 #include <linux/notifier.h>
 #include "oplus_display_private_api.h"
@@ -743,20 +742,6 @@ static bool dsi_display_validate_reg_read(struct dsi_panel *panel)
 			return true;
 		group += len;
 	}
-
-#ifdef OPLUS_BUG_STABILITY
-	{
-		unsigned char payload[150] = "";
-		int cnt = 0;
-
-		cnt += scnprintf(payload, sizeof(payload), "NULL$$EventID@@%d$$ESD Error is@@",OPLUS_MM_DIRVER_FB_EVENT_ID_ESD);
-		for (i = 0; i < len; ++i) {
-			cnt += scnprintf(payload + cnt, sizeof(payload) - cnt, "[%02x] ", config->return_buf[i]);
-		}
-		DRM_ERROR("ESD check failed: %s\n", payload);
-		upload_mm_kevent_fb_data(OPLUS_MM_DIRVER_FB_EVENT_MODULE_DISPLAY,payload);
-	}
-#endif  /*OPLUS_BUG_STABILITY*/
 
 	return false;
 }
@@ -5599,9 +5584,6 @@ static int dsi_display_init(struct dsi_display *display)
 {
 	int rc = 0;
 	struct platform_device *pdev = display->pdev;
-#ifdef OPLUS_BUG_STABILITY
-	unsigned char payload[150] = "";
-#endif /*OPLUS_BUG_STABILITY*/
 
 	mutex_init(&display->display_lock);
 
@@ -5613,16 +5595,8 @@ static int dsi_display_init(struct dsi_display *display)
 
 	rc = component_add(&pdev->dev, &dsi_display_comp_ops);
 
-#ifndef OPLUS_BUG_STABILITY
 	if (rc)
 		pr_err("component add failed, rc=%d\n", rc);
-#else
-	if (rc) {
-		pr_err("component add failed, rc=%d\n", rc);
-		scnprintf(payload, sizeof(payload), "NULL$$EventID@@%d$$component add error panel match fault rc=%d",OPLUS_MM_DIRVER_FB_EVENT_ID_PANEL_MATCH_FAULT,rc);
-		upload_mm_kevent_fb_data(OPLUS_MM_DIRVER_FB_EVENT_MODULE_DISPLAY,payload);
-	}
-#endif /*OPLUS_BUG_STABILITY*/
 
 	pr_debug("component add success: %s\n", display->name);
 end:

@@ -36,9 +36,6 @@
 #if defined(OPLUS_ARCH_EXTENDS) && !defined(OPLUS_FEATURE_OP_SPECIFIC_AUDIO_KERNEL)
 #include <linux/soc/qcom/max20328.h>
 #endif /* OPLUS_ARCH_EXTENDS */
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-#include <soc/oplus/system/oplus_mm_kevent_fb.h>
-#endif
 #ifdef OPLUS_FEATURE_FSA4480
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    2550
 #else
@@ -751,12 +748,6 @@ static int wcd_mbhc_get_plug_from_adc(struct wcd_mbhc *mbhc, int adc_result)
 	return plug_type;
 }
 
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-#define OPLUS_AUDIO_EVENTID_HEADSET_DET   (10009)
-#define OPLUS_FB_HEADSET_DET_RATELIMIT    (60*1000)
-int upload_mm_fb_kevent_to_atlas_limit(unsigned int event_id, unsigned char *payload, int limit_ms);
-static int (*upload_mm_fb_func)(unsigned int event_id, unsigned char *payload, int limit_ms);
-#endif
 static void wcd_correct_swch_plug(struct work_struct *work)
 {
 	struct wcd_mbhc *mbhc;
@@ -796,10 +787,6 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	int high_hph_count = 0;
 	int hph_threshold;
 	#endif /* OPLUS_ARCH_EXTENDS */
-	#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-	int retry = 0;
-	char buf[MM_KEVENT_MAX_PAYLOAD_SIZE] = {0};
-	#endif
 
 #ifdef OPLUS_ARCH_EXTENDS
 #undef pr_debug
@@ -996,10 +983,6 @@ correct_plug_type:
 
 		if (mbhc->mbhc_cb->hph_pa_on_status)
 			is_pa_on = mbhc->mbhc_cb->hph_pa_on_status(mbhc->codec);
-
-		#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-		retry++;
-		#endif /* OPLUS_FEATURE_MM_FEEDBACK */
 
 		#ifndef OPLUS_ARCH_EXTENDS
 		if (mbhc->need_cross_conn) {
@@ -1361,17 +1344,6 @@ exit:
 	#endif /* OPLUS_ARCH_EXTENDS */
 
 	mbhc->mbhc_cb->lock_sleep(mbhc, false);
-	#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-	if ((plug_type != MBHC_PLUG_TYPE_HEADSET) &&
-	    (plug_type != MBHC_PLUG_TYPE_HEADPHONE)) {
-		upload_mm_fb_func = symbol_request(upload_mm_fb_kevent_to_atlas_limit);
-		if (upload_mm_fb_func) {
-			scnprintf(buf, sizeof(buf) - 1, "func@@%s$$plug_type@@%d$$output_mv@@%d$$retry@@%d",
-				__func__, plug_type, output_mv, retry);
-			upload_mm_fb_func(OPLUS_AUDIO_EVENTID_HEADSET_DET, buf, OPLUS_FB_HEADSET_DET_RATELIMIT);
-		}
-	}
-	#endif /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
 	pr_debug("%s: leave\n", __func__);
 }
 

@@ -22,9 +22,6 @@
 #include <ipc/apr_tal.h>
 #include "adsp_err.h"
 #include "q6afecal-hwdep.h"
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-#include <soc/oplus/system/oplus_mm_kevent_fb.h>
-#endif
 
 /* #ifdef OPLUS_ARCH_EXTENDS */
 #define CONFIG_SND_SOC_AWINIC_AW882XX
@@ -40,13 +37,6 @@
 
 #endif /* #ifdef CONFIG_SND_SOC_AWINIC_AW882XX */
 /* #endif OPLUS_ARCH_EXTENDS */
-
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-#define OPLUS_AUDIO_EVENTID_AFE_RX_ERROR   (10026)
-#define OPLUS_FB_AFE_RX_ERROR_RATELIMIT    (60*1000)
-int upload_mm_fb_kevent_to_atlas_limit(unsigned int event_id, unsigned char *payload, int limit_ms);
-static int (*upload_mm_fb_func)(unsigned int event_id, unsigned char *payload, int limit_ms);
-#endif
 
 #ifdef OPLUS_FEATURE_ADSP_RECOVERY
 #include <linux/module.h>
@@ -2890,9 +2880,6 @@ static int send_afe_cal_type(int cal_index, int port_id)
 	struct cal_block_data		*cal_block = NULL;
 	int ret;
 	int afe_port_index = q6audio_get_port_index(port_id);
-	#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-	char buf[MM_KEVENT_MAX_PAYLOAD_SIZE] = {0};
-	#endif
 
 	pr_info("%s: cal_index is %d\n", __func__, cal_index);
 
@@ -2939,24 +2926,9 @@ static int send_afe_cal_type(int cal_index, int port_id)
 		goto unlock;
 	}
 	ret = afe_send_cal_block(port_id, cal_block);
-	#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-	if (ret < 0) {
-	#else
 	if (ret < 0)
-	#endif
 		pr_err("%s: No cal sent for cal_index %d, port_id = 0x%x! ret %d\n",
 			__func__, cal_index, port_id, ret);
-	#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-		if ((port_id == 0x1004) && (cal_index == AFE_COMMON_RX_CAL) && (ret == -131)) {
-			upload_mm_fb_func = symbol_request(upload_mm_fb_kevent_to_atlas_limit);
-			if (upload_mm_fb_func) {
-				scnprintf(buf, sizeof(buf) - 1, "func@@%s$$port_id@@%#x$$ret@@%d",
-					__func__, port_id, ret);
-				upload_mm_fb_func(OPLUS_AUDIO_EVENTID_AFE_RX_ERROR, buf, OPLUS_FB_AFE_RX_ERROR_RATELIMIT);
-			}
-		}
-	}
-	#endif
 
 	cal_utils_mark_cal_used(cal_block);
 

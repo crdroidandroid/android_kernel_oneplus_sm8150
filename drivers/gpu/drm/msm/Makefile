@@ -226,9 +226,7 @@ msm_drm-$(CONFIG_DRM_MSM) += \
 	msm_fence.o \
 	msm_debugfs.o
 
-msm_drm-y += oplus/oplus_mm_kevent_fb.o \
-	oplus/oplus_mm_kevent.o \
-	oplus/oplus_dsi_support.o \
+msm_drm-y += oplus/oplus_dsi_support.o \
 	oplus/oplus_display_private_api.o \
 	oplus/oplus_dc_diming.o \
 	oplus/oplus_onscreenfingerprint.o \

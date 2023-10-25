@@ -41,10 +41,6 @@ source "drivers/soc/oplus/system/oplus_gpio/Kconfig"
 source "drivers/soc/oplus/system/qcom_pmicwd/Kconfig"
 #endif /* OPLUS_FEATURE_QCOM_PMICWD */
 
-#ifdef OPLUS_FEATURE_MM_FEEDBACK
-source "drivers/soc/oplus/system/oplus_mm_fb/Kconfig"
-#endif /* OPLUS_FEATURE_MM_FEEDBACK */
-
 #ifdef OPLUS_FEATURE_QCOM_WATCHDOG
 source "drivers/soc/oplus/system/qcom_watchdog/Kconfig"
 #endif /* OPLUS_FEATURE_QCOM_WATCHDOG */

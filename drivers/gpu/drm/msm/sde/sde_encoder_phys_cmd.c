@@ -36,7 +36,6 @@
 
 #ifdef OPLUS_BUG_STABILITY
 #define PP_TIMEOUT_BAD_TRIALS   10
-#include "oplus_mm_kevent_fb.h"
 extern int oplus_dimlayer_fingerprint_failcount;
 #endif /*OPLUS_BUG_STABILITY */
 
@@ -619,14 +618,6 @@ static int _sde_encoder_phys_cmd_handle_ppdone_timeout(
 		sde_connector_event_notify(conn, DRM_EVENT_SDE_HW_RECOVERY,
 				sizeof(uint8_t), event);
 	} else if (cmd_enc->pp_timeout_report_cnt) {
-		#ifndef OPLUS_BUG_STABILITY
-		{
-			unsigned char payload[150] = "";
-			scnprintf(payload, sizeof(payload), "NULL$$EventID@@%d$$wr_ptr_irq_timeout@@%d",
-					 OPLUS_MM_DIRVER_FB_EVENT_ID_ESD, oplus_dimlayer_fingerprint_failcount);
-			upload_mm_kevent_fb_data(OPLUS_MM_DIRVER_FB_EVENT_MODULE_DISPLAY,payload);
-		}
-		#endif /* OPLUS_BUG_STABILITY */
 		SDE_DBG_DUMP("dsi_dbg_bus", "panic");
 	}
 

@@ -15,8 +15,6 @@
 #include "dsi_display.h"
 #include "oplus_dsi_support.h"
 #include "oplus_onscreenfingerprint.h"
-#include "oplus_mm_kevent_fb.h"
-
 
 #define FFL_LEVEL_START 2
 #define FFL_LEVEL_END  236
@@ -38,8 +36,6 @@ static DEFINE_MUTEX(oplus_ffl_lock);
 
 void oplus_ffl_set(int enable)
 {
-	unsigned char payload[150] = "";
-
 	mutex_lock(&oplus_ffl_lock);
 
 	if (enable != is_ffl_enable) {
@@ -53,12 +49,6 @@ void oplus_ffl_set(int enable)
 	}
 
 	mutex_unlock(&oplus_ffl_lock);
-
-	if ((is_ffl_enable == FFL_TRIGGLE_CONTROL) && ffl_work_running) {
-		scnprintf(payload, sizeof(payload), "NULL$$EventID@@%d$$fflset@@%d",
-			OPLUS_MM_DIRVER_FB_EVENT_ID_FFLSET, enable);
-		upload_mm_kevent_fb_data(OPLUS_MM_DIRVER_FB_EVENT_MODULE_DISPLAY, payload);
-	}
 }
 
 int oplus_display_panel_get_ffl(void *buf)

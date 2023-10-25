@@ -44,10 +44,6 @@
 #define CREATE_TRACE_POINTS
 #include <trace/events/trace_msm_pil_event.h>
 
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-#include <soc/oplus/system/oplus_mm_kevent_fb.h>
-#endif /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
-
 #include "peripheral-loader.h"
 
 #define pil_err(desc, fmt, ...)						\
@@ -477,26 +473,6 @@ static void print_aux_minidump_tocs(struct pil_desc *desc)
 }
 #endif
 
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-#define CAUSENAME_SIZE 128
-unsigned int BKDRHash(char* str, unsigned int len)
-{
-	unsigned int seed = 131; /* 31 131 1313 13131 131313 etc.. */
-	unsigned int hash = 0;
-	unsigned int i    = 0;
-
-	if (str == NULL) {
-		return 0;
-	}
-
-	for(i = 0; i < len; str++, i++) {
-		hash = (hash * seed) + (*str);
-	}
-
-	return hash;
-}
-#endif /*CONFIG_OPLUS_FEATURE_MM_FEEDBACK*/
-
 #ifdef OPLUS_FEATURE_SSR
 void __adsp_send_uevent(struct device *dev, char *reason)
 {
@@ -541,12 +517,6 @@ int pil_do_ramdump(struct pil_desc *desc,
 	struct pil_priv *priv = desc->priv;
 	struct pil_seg *seg;
 	int count = 0, ret;
-
-#ifdef CONFIG_OPLUS_FEATURE_MM_FEEDBACK
-	unsigned char payload[100] = "";
-	unsigned int hashid;
-	char strHashSource[CAUSENAME_SIZE];
-#endif /*CONFIG_OPLUS_FEATURE_MM_FEEDBACK*/
 
 #ifdef CONFIG_QCOM_MINIDUMP
 	if (desc->minidump_ss) {
@@ -611,18 +581,6 @@ int pil_do_ramdump(struct pil_desc *desc,
 	if (ret)
 		pil_err(desc, "%s: Ramdump collection failed for subsys %s rc:%d\n",
 				__func__, desc->name, ret);
-
-#if defined(OPLUS_FEATURE_SSR) && defined(CONFIG_OPLUS_FEATURE_MM_FEEDBACK)
-	if(strlen(desc->name) > 0 && (strncmp(desc->name,"adsp",strlen(desc->name)) == 0)) {
-		strncpy(strHashSource,desc->name,strlen(desc->name));
-		hashid = BKDRHash(strHashSource,strlen(strHashSource));
-		scnprintf(payload, sizeof(payload), "payload@@%s$$fid@@%u", desc->name, hashid);
-		upload_mm_fb_kevent_to_atlas_limit(OPLUS_AUDIO_EVENTID_ADSP_CRASH, payload, OPLUS_FB_ADSP_CRASH_RATELIMIT);
-		if(desc->dev){
-			__adsp_send_uevent(desc->dev, payload);
-		}
-	}
-#endif /* OPLUS_FEATURE_SSR */ /* CONFIG_OPLUS_FEATURE_MM_FEEDBACK */
 
 	if (desc->subsys_vmid > 0)
 		ret = pil_assign_mem_to_subsys(desc, priv->region_start,
