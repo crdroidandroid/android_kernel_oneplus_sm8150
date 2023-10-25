@@ -32,9 +32,6 @@ obj-$(CONFIG_IOMONITOR)    +=  oplus/iomonitor/
 #ifdef VENDOR_EDIT
 obj-y				+= oplus/
 #endif
-#ifdef OPLUS_FEATURE_POWERINFO_STANDBY
-obj-$(CONFIG_OPLUS_WAKELOCK_PROFILER) += oplus/owakelock/
-#endif /* OPLUS_FEATURE_POWERINFO_STANDBY */
 #ifdef OPLUS_FEATURE_HEALTHINFO
 obj-y     +=  oplus/oplus_healthinfo/
 #endif /* OPLUS_FEATURE_HEALTHINFO */

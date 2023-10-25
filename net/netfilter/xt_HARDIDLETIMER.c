@@ -157,10 +157,6 @@ static enum alarmtimer_restart hardidletimer_tg_alarmproc(struct alarm *alarm,
 	return ALARMTIMER_NORESTART;
 }
 
-#ifdef OPLUS_FEATURE_POWERINFO_STANDBY
-enum alarmtimer_restart (*net_alarm_func)(struct alarm *, ktime_t now) = hardidletimer_tg_alarmproc;
-#endif /* OPLUS_FEATURE_POWERINFO_STANDBY */
-
 static int hardidletimer_tg_create(struct hardidletimer_tg_info *info)
 {
 	int ret;
@@ -190,9 +186,6 @@ static int hardidletimer_tg_create(struct hardidletimer_tg_info *info)
 
 	alarm_init(&info->timer->alarm, ALARM_BOOTTIME,
 		   hardidletimer_tg_alarmproc);
-	#ifdef OPLUS_FEATURE_POWERINFO_STANDBY
-	net_alarm_func = hardidletimer_tg_alarmproc;
-	#endif /* VENDOR_EDIT */
 
 	info->timer->alarm.data = info->timer;
 	info->timer->refcnt = 1;
