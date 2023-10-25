@@ -10,9 +10,6 @@
 #include <linux/ktime.h>
 #include <linux/fs.h>
 #include <linux/module.h>
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-#include <soc/oplus/system/kernel_fb.h>
-#endif
 #include "oplus_vooc.h"
 #include "oplus_charger.h"
 #include "oplus_gauge.h"
@@ -35,10 +32,6 @@ static int break_flag = -1;
 static int mcu_update_flag = -1;
 static int gauge_seal_flag = -1;
 
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-#define OPLUS_CHG_DEBUG_LOG_TAG      "OplusCharger"
-#define OPLUS_CHG_DEBUG_EVENT_ID     "charge_monitor"
-#endif
 struct oplus_chg_debug_info oplus_chg_debug_info;
 struct oplus_chg_chip *g_debug_oplus_chip = NULL;
 struct vooc_charger_type {
@@ -210,14 +203,6 @@ struct oplus_chg_debug_info {
 	int fcc_design;
 	int chg_full_notified_flag;
 	struct workqueue_struct *oplus_chg_debug_wq;
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-	struct kernel_packet_info *dcs_info;
-	struct mutex dcs_info_lock;
-#define SEND_INFO_DELAY 3000
-	struct delayed_work send_info_dwork;
-#define SEND_INFO_MAX_CNT 5
-	int retry_cnt;
-#endif
 	char flag_reason[32];
 	char type_reason[32];
 	int vooc_mcu_error;
@@ -375,76 +360,7 @@ static int oplus_chg_debug_reset_notify_flag(void);
 static int oplus_chg_reset_chg_notify_type(void);
 static int oplus_chg_chg_batt_capacity_jump_check(struct oplus_chg_chip *chip);
 static int oplus_chg_mcu_update_check(struct oplus_chg_chip *chip);
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-static int oplus_chg_pack_debug_info(struct oplus_chg_chip *chip)
-{
-	char log_tag[] = OPLUS_CHG_DEBUG_LOG_TAG;
-	char event_id[] = OPLUS_CHG_DEBUG_EVENT_ID;
-	int len;
-	len = strlen(&oplus_chg_debug_msg[sizeof(struct kernel_packet_info)]);
-	if (len) {
-		mutex_lock(&oplus_chg_debug_info.dcs_info_lock);
-		memset(oplus_chg_debug_info.dcs_info, 0x0, sizeof(struct kernel_packet_info));
-		oplus_chg_debug_info.dcs_info->type = 1;
-		memcpy(oplus_chg_debug_info.dcs_info->log_tag, log_tag, strlen(log_tag));
-		memcpy(oplus_chg_debug_info.dcs_info->event_id, event_id, strlen(event_id));
-		oplus_chg_debug_info.dcs_info->payload_length = len + 1;
 
-		if (chg_check_point_debug&OPEN_LOG_BIT) {
-			chg_err("%s\n", oplus_chg_debug_info.dcs_info->payload);
-		}
-
-		mutex_unlock(&oplus_chg_debug_info.dcs_info_lock);
-		return 0;
-	}
-	return -1;
-}
-static int oplus_chg_debug_mask_notify_flag(int low, int high)
-{
-	unsigned long long mask = -1;
-	int bits = sizeof(mask) * 8 - 1;
-	mask = (mask >> low) << low;
-	mask = (mask << (bits - high)) >> (bits - high);
-	mutex_lock(&oplus_chg_debug_info.nflag_lock);
-	oplus_chg_debug_info.notify_flag &= ~mask;
-	mutex_unlock(&oplus_chg_debug_info.nflag_lock);
-	return 0;
-}
-static void oplus_chg_send_info_dwork(struct work_struct *work)
-{
-	int ret;
-	mutex_lock(&oplus_chg_debug_info.dcs_info_lock);
-	ret = fb_kevent_send_to_user(oplus_chg_debug_info.dcs_info);
-	mutex_unlock(&oplus_chg_debug_info.dcs_info_lock);
-	if ((ret > 0) && (oplus_chg_debug_info.retry_cnt > 0)) {
-		queue_delayed_work(oplus_chg_debug_info.oplus_chg_debug_wq,
-				&oplus_chg_debug_info.send_info_dwork, msecs_to_jiffies(SEND_INFO_DELAY));
-	}
-	else {
-		//soc jump
-		oplus_chg_debug_mask_notify_flag(0, OPLUS_NOTIFY_CHG_BATT_FULL_NON_100_CAP);
-		//slow check
-		if(send_info_flag != SEND_INFO_FLAG_IRQ) {//plug out with mcu error 0x54  do not clear charger slow flag
-			oplus_chg_debug_mask_notify_flag(OPLUS_NOTIFY_CHG_SLOW_BATT_WARM_TEMP,
-				OPLUS_NOTIFY_CHG_SLOW_LED_ON_LONG_TIME);
-		}
-		//ic error
-		oplus_chg_debug_mask_notify_flag(OPLUS_NOTIFY_CHG_SLOW_BATT_NON_AUTH, OPLUS_NOTIFY_GAUGE_UNSEAL_FAIL);
-		oplus_chg_reset_chg_notify_type();
-		memset(oplus_chg_debug_info.flag_reason,0,sizeof(oplus_chg_debug_info.flag_reason));
-		memset(oplus_chg_debug_info.type_reason,0,sizeof(oplus_chg_debug_info.type_reason));
-		oplus_chg_debug_info.vooc_mcu_error = 0;
-		if(send_info_flag == SEND_INFO_FLAG_IRQ) {
-			send_info_flag = 0;
-		}
-		break_flag = -1;
-		mcu_update_flag = -1;
-		gauge_seal_flag = -1;
-	}
-	chg_err("retry_cnt: %d\n", oplus_chg_debug_info.retry_cnt);
-	oplus_chg_debug_info.retry_cnt--;
-}
-#endif
 static int oplus_chg_read_filedata(struct timespec *ts)
 {
 	struct file *filp = NULL;
@@ -551,19 +467,9 @@ static void oplus_chg_print_debug_info(struct oplus_chg_chip *chip)
 	if (oplus_chg_debug_info.notify_type ||
 		oplus_chg_debug_notify_flag_is_set(OPLUS_NOTIFY_CHARGER_INFO))
 	{
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-		if (delayed_work_pending(&oplus_chg_debug_info.send_info_dwork))
-			cancel_delayed_work_sync(&oplus_chg_debug_info.send_info_dwork);
-		mutex_lock(&oplus_chg_debug_info.dcs_info_lock);
-#endif
 		memset(oplus_chg_debug_msg, 0x0, sizeof(oplus_chg_debug_msg));
 		getnstimeofday(&ts);
 		rtc_time_to_tm(ts.tv_sec, &tm);
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-		ret += sizeof(struct kernel_packet_info);
-		ret += snprintf(&oplus_chg_debug_msg[ret], OPLUS_CHG_DEBUG_MSG_LEN - ret,
-				OPLUS_CHG_DEBUG_EVENT_ID"$$");
-#endif
 		//add for common
 		ret += snprintf(&oplus_chg_debug_msg[ret], OPLUS_CHG_DEBUG_MSG_LEN - ret,
 				"type@@0x%x", oplus_chg_debug_info.notify_type);
@@ -690,22 +596,9 @@ static void oplus_chg_print_debug_info(struct oplus_chg_chip *chip)
 			ret += snprintf(&oplus_chg_debug_msg[ret], OPLUS_CHG_DEBUG_MSG_LEN - ret,
 					"]");
 		}
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-		mutex_unlock(&oplus_chg_debug_info.dcs_info_lock);
-		chg_err("[feedback] %s\n", &oplus_chg_debug_msg[sizeof(struct kernel_packet_info)]);
-		if (oplus_chg_debug_info.notify_type ||
-			oplus_chg_debug_notify_flag_is_set(OPLUS_NOTIFY_CHARGER_INFO)) {
-			ret = oplus_chg_pack_debug_info(chip);
-			if (!ret) {
-				oplus_chg_debug_info.retry_cnt = SEND_INFO_MAX_CNT;
-				queue_delayed_work(oplus_chg_debug_info.oplus_chg_debug_wq, &oplus_chg_debug_info.send_info_dwork, 0);
-			}
-		}
-#else
 		if (chg_check_point_debug&OPEN_LOG_BIT) {
 			chg_err("[debug test]%s\n", oplus_chg_debug_msg);
 		}
-#endif
 	oplus_chg_debug_info.real_charger_type = oplus_chg_get_real_charger_type(chip);
 	}
 }
@@ -1969,11 +1862,6 @@ int oplus_chg_debug_info_init(void)
 	oplus_chg_debug_info.usb_psy = power_supply_get_by_name("usb");
 	oplus_chg_debug_info.batt_psy = power_supply_get_by_name("battery");
 	oplus_chg_debug_info.oplus_chg_debug_wq = create_workqueue("oplus_chg_debug_wq");
-#ifdef CONFIG_OPLUS_FEATURE_FEEDBACK
-	oplus_chg_debug_info.dcs_info = (struct kernel_packet_info *)&oplus_chg_debug_msg[0];
-	INIT_DELAYED_WORK(&oplus_chg_debug_info.send_info_dwork, oplus_chg_send_info_dwork);
-	mutex_init(&oplus_chg_debug_info.dcs_info_lock);
-#endif
 	INIT_DELAYED_WORK(&oplus_chg_debug_info.soc_load_dwork, oplus_chg_soc_load_dwork);
 
 	oplus_chg_debug_info_parse_dt();
