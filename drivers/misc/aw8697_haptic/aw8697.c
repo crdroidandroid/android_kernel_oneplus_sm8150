@@ -4695,7 +4695,7 @@ static int aw8697_haptic_ram_vbat_comp(struct aw8697 *aw8697, bool flag)
     } else {
         aw8697_haptic_set_gain(aw8697, aw8697->gain);
     }
-    pr_err("%s: aw8697->gain = 0x%x, temp_gain = 0x%x, aw8697->ram_vbat_comp=%d.\n",
+    pr_debug("%s: aw8697->gain = 0x%x, temp_gain = 0x%x, aw8697->ram_vbat_comp=%d.\n",
         __func__, aw8697->gain, temp_gain, aw8697->ram_vbat_comp);
 
     return 0;
@@ -5217,7 +5217,7 @@ static void aw8697_op_clean_status(struct aw8697 *aw8697)
 #ifdef CONFIG_OPLUS_HAPTIC_OOS
 	/*aw8697->sin_add_flag = 0;*/
 #endif
-    pr_info("%s enter\n", __FUNCTION__);
+    pr_debug("%s enter\n", __FUNCTION__);
 }
 
 
@@ -7495,7 +7495,7 @@ static ssize_t aw8697_activate_store(struct device *dev,
     if (val != 0 && val != 1)
         return count;
 
-    pr_err("%s: value=%d\n", __FUNCTION__, val);
+    pr_debug("%s: value=%d\n", __FUNCTION__, val);
     //vincent
     if (0 == val)
     {
@@ -7524,7 +7524,7 @@ static ssize_t aw8697_activate_store(struct device *dev,
 		return count;
 	}
 #endif
-		pr_err("%s: 1 aw8697->gain=0x%02x\n", __FUNCTION__, aw8697->gain);
+		pr_debug("%s: 1 aw8697->gain=0x%02x\n", __FUNCTION__, aw8697->gain);
         if (aw8697->gain >= AW8697_HAPTIC_RAM_VBAT_COMP_GAIN) {
             aw8697->gain = AW8697_HAPTIC_RAM_VBAT_COMP_GAIN;
         }
@@ -7535,7 +7535,7 @@ static ssize_t aw8697_activate_store(struct device *dev,
 #else
         if (aw8697->device_id == 815 || aw8697->device_id == 9595)
 #endif
-            aw8697_haptic_set_gain(aw8697, aw8697->gain);
+        aw8697_haptic_set_gain(aw8697, aw8697->gain);
         aw8697_haptic_set_repeat_wav_seq(aw8697, AW8697_WAVEFORM_INDEX_SINE_CYCLE);
 
         mutex_unlock(&aw8697->lock);
@@ -7573,7 +7573,7 @@ static ssize_t aw8697_activate_store(struct device *dev,
 		aw8697_haptic_set_rtp_aei(aw8697, false);
 		aw8697_interrupt_clear(aw8697);
 		aw8697->sin_add_flag = 0;
-		pr_info("%s: value=%d\n", __FUNCTION__, val);
+		pr_debug("%s: value=%d\n", __FUNCTION__, val);
 	} else {
 		if (aw8697->duration <= 500) {
 			aw8697->sin_add_flag = 0;
@@ -7584,7 +7584,7 @@ static ssize_t aw8697_activate_store(struct device *dev,
 			val = rtp_max_num - 1;
 		}
 
-		pr_info("%s:a aw8697->rtp_file_num=%d\n", __FUNCTION__, val);
+		pr_debug("%s:a aw8697->rtp_file_num=%d\n", __FUNCTION__, val);
 		aw8697_haptic_stop(aw8697);
 		aw8697_haptic_set_rtp_aei(aw8697, false);
 		aw8697_interrupt_clear(aw8697);
@@ -7782,7 +7782,7 @@ static ssize_t aw8697_vmax_store(struct device *dev,
     if (rc < 0)
         return rc;
 
-    pr_err("%s: value=%d\n", __FUNCTION__, val);
+    pr_debug("%s: value=%d\n", __FUNCTION__, val);
 
     mutex_lock(&aw8697->lock);
 #ifdef OPLUS_FEATURE_CHG_BASIC
@@ -7806,7 +7806,7 @@ static ssize_t aw8697_vmax_store(struct device *dev,
     aw8697_haptic_set_bst_vol(aw8697, aw8697->vmax);
 #endif
     mutex_unlock(&aw8697->lock);
-    pr_err("%s:aw8697->gain[0x%x], aw8697->vmax[0x%x] end\n", __FUNCTION__, aw8697->gain, aw8697->vmax);
+    pr_debug("%s:aw8697->gain[0x%x], aw8697->vmax[0x%x] end\n", __FUNCTION__, aw8697->gain, aw8697->vmax);
     return count;
 }
 
@@ -8132,7 +8132,7 @@ static ssize_t aw8697_rtp_store(struct device *dev, struct device_attribute *att
 		mutex_unlock(&aw8697->lock);
 		return rc;
 	}
-    pr_err("%s: val [%d] \n", __func__, val);
+    pr_debug("%s: val [%d] \n", __func__, val);
 
     if (val == 1025) {
         mute = true;
@@ -9395,7 +9395,7 @@ static ssize_t aw8697_waveform_index_store(struct device *dev, struct device_att
 
 
 	if(1 == sscanf(buf, "%d", &databuf[0])) {
-		pr_err("%s: waveform_index = %d\n", __FUNCTION__, databuf[0]);
+		pr_debug("%s: waveform_index = %d\n", __FUNCTION__, databuf[0]);
 		mutex_lock(&aw8697->lock);
 		aw8697->seq[0] = (unsigned char)databuf[0];
 		aw8697_haptic_set_wav_seq(aw8697, 0, aw8697->seq[0]);
