@@ -220,11 +220,6 @@ static void sde_encoder_phys_cmd_pp_tx_done_irq(void *arg, int irq_idx)
 				SDE_ENCODER_FRAME_EVENT_SIGNAL_RETIRE_FENCE);
 		atomic_add_unless(&phys_enc->pending_ctlstart_cnt, -1, 0);
 		atomic_set(&phys_enc->ctlstart_timeout, 0);
-		SDE_EVT32_IRQ(DRMID(phys_enc->parent),
-                        phys_enc->hw_pp->idx - PINGPONG_0,
-			phys_enc->pending_retire_fence_cnt,
-			phys_enc->pending_ctlstart_cnt, 0x999);
-
 	}
 
 	/* notify all synchronous clients first, then asynchronous clients */
@@ -299,8 +294,6 @@ static void sde_encoder_phys_cmd_te_rd_ptr_irq(void *arg, int irq_idx)
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent),
 			phys_enc->hw_pp->idx - PINGPONG_0,
 			phys_enc->hw_intf->idx - INTF_0,
-			cmd_enc->pending_rd_ptr_cnt,
-			phys_enc->pending_retire_fence_cnt,
 			event, 0xfff);
 
 	if (phys_enc->parent_ops.handle_vblank_virt)
@@ -334,8 +327,6 @@ static void sde_encoder_phys_cmd_ctl_start_irq(void *arg, int irq_idx)
 
 	time_diff_us = ktime_us_delta(ktime_get(), cmd_enc->rd_ptr_timestamp);
 
-	SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0,
-		 phys_enc->pending_retire_fence_cnt, cmd_enc->pending_rd_ptr_cnt);
 	/* handle retire fence based on only master */
 	if (sde_encoder_phys_cmd_is_master(phys_enc)
 			&& atomic_read(&phys_enc->pending_retire_fence_cnt)) {
@@ -368,7 +359,7 @@ static void sde_encoder_phys_cmd_ctl_start_irq(void *arg, int irq_idx)
 	}
 
 	SDE_EVT32_IRQ(DRMID(phys_enc->parent), ctl->idx - CTL_0,
-			time_diff_us, cmd_enc->ctl_start_threshold, cmd_enc->pending_rd_ptr_cnt, event, 0xfff);
+				time_diff_us, event, 0xfff);
 
 	/* Signal any waiting ctl start interrupt */
 	wake_up_all(&phys_enc->pending_kickoff_wq);

@@ -2414,14 +2414,6 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 		goto end;
 	}
 
-	for_each_oldnew_crtc_in_state(state, crtc, old_crtc_state, new_crtc_state, i) {
-		if (new_crtc_state->fd && !new_crtc_state->active && new_crtc_state->enable) {
-			SDE_EVT32(new_crtc_state->fd, new_crtc_state->active, new_crtc_state->enable);
-			WARN_ON(new_crtc_state->fd);
-			new_crtc_state->active = true;
-		}
-	}
-
 	ret = drm_atomic_helper_check(dev, state);
 	if (ret)
 		goto end;
@@ -2905,7 +2897,6 @@ retry:
 				DRM_ERROR("failed to get crtc %d state\n",
 						conn->state->crtc->base.id);
 				drm_connector_list_iter_end(&conn_iter);
-                                ret = -EINVAL;
 				goto unlock;
 			}
 
@@ -2914,7 +2905,6 @@ retry:
 			++num_crtcs;
 		}
 	}
-	SDE_EVT32(num_crtcs);
 	drm_connector_list_iter_end(&conn_iter);
 
 	/* check for nothing to do */

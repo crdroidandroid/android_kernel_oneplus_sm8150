@@ -1312,7 +1312,6 @@ static int sde_connector_atomic_set_property(struct drm_connector *connector,
 		/*
 		 * update the the offset to a timeline for commit completion
 		 */
-		SDE_EVT32(connector->base.id, c_conn->allow_bl_update);
 		rc = sde_fence_create(c_conn->retire_fence, &fence_fd, 1);
 		if (rc) {
 			SDE_ERROR("fence create failed rc:%d\n", rc);

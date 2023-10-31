@@ -25,7 +25,6 @@
 #include "dsi_panel.h"
 #include "dsi_ctrl_hw.h"
 #include "dsi_parser.h"
-#include "sde_dbg.h"
 #ifdef OPLUS_BUG_STABILITY
 #include <soc/oplus/system/boot_mode.h>
 #include "oplus_display_private_api.h"
@@ -901,7 +900,6 @@ static int dsi_panel_power_off(struct dsi_panel *panel)
 	if (rc)
 		pr_err("[%s] failed to enable vregs, rc=%d\n", panel->name, rc);
 
-	SDE_EVT32(rc, SDE_EVTLOG_FUNC_EXIT);
 	return rc;
 }
 
@@ -984,7 +982,6 @@ int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 			 panel->name, type);
 		goto error;
 	}
-	SDE_EVT32(type, SDE_EVTLOG_FUNC_ENTRY);
 	for (i = 0; i < count; i++) {
 		if (state == DSI_CMD_SET_STATE_LP)
 			cmds->msg.flags |= MIPI_DSI_MSG_USE_LPM;
@@ -1009,7 +1006,6 @@ int dsi_panel_tx_cmd_set(struct dsi_panel *panel,
 		cmds++;
 	}
 error:
-	SDE_EVT32(rc, SDE_EVTLOG_FUNC_EXIT);
 	return rc;
 }
 

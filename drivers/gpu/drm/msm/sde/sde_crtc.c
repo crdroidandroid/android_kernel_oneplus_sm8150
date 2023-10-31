@@ -3019,9 +3019,7 @@ static void _sde_crtc_retire_event(struct drm_connector *connector,
 	}
 
 	SDE_ATRACE_BEGIN("signal_retire_fence");
-	SDE_EVT32(fence_event, ts, SDE_EVTLOG_FUNC_ENTRY);
 	sde_connector_complete_commit(connector, ts, fence_event);
-	SDE_EVT32(SDE_EVTLOG_FUNC_EXIT);
 	SDE_ATRACE_END("signal_retire_fence");
 }
 
@@ -3091,11 +3089,9 @@ static void sde_crtc_frame_event_work(struct kthread_work *work)
 
 	if (fevent->event & SDE_ENCODER_FRAME_EVENT_SIGNAL_RELEASE_FENCE) {
 		SDE_ATRACE_BEGIN("signal_release_fence");
-		SDE_EVT32(crtc->base.id, SDE_EVTLOG_FUNC_ENTRY);
 		sde_fence_signal(sde_crtc->output_fence, fevent->ts,
 				(fevent->event & SDE_ENCODER_FRAME_EVENT_ERROR)
 				? SDE_FENCE_SIGNAL_ERROR : SDE_FENCE_SIGNAL);
-		SDE_EVT32(crtc->base.id, SDE_EVTLOG_FUNC_EXIT);
 		SDE_ATRACE_END("signal_release_fence");
 	}
 
@@ -3667,7 +3663,6 @@ static void _sde_crtc_wait_for_fences(struct drm_crtc *crtc)
 	 * fence wait is interrupted due to interrupt call.
 	 */
 	SDE_ATRACE_BEGIN("plane_wait_input_fence");
-	SDE_EVT32(DRMID(crtc), crtc->state->active, SDE_EVTLOG_FUNC_ENTRY);
 	drm_atomic_crtc_for_each_plane(plane, crtc) {
 		do {
 			kt_wait = ktime_sub(kt_end, ktime_get());
@@ -3675,11 +3670,9 @@ static void _sde_crtc_wait_for_fences(struct drm_crtc *crtc)
 				wait_ms = ktime_to_ms(kt_wait);
 			else
 				wait_ms = 0;
-			SDE_EVT32(DRMID(crtc), plane, wait_ms);
 			rc = sde_plane_wait_input_fence(plane, wait_ms);
 		} while (wait_ms && rc == -ERESTARTSYS);
 	}
-	SDE_EVT32(DRMID(crtc), SDE_EVTLOG_FUNC_EXIT);
 	SDE_ATRACE_END("plane_wait_input_fence");
 }
 
@@ -3846,11 +3839,9 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 		return;
 	}
 
-	SDE_EVT32(crtc->base.id, crtc->enabled, crtc->state->enable, crtc->state->active, SDE_EVTLOG_FUNC_ENTRY);
 	if (!crtc->state->enable) {
 		SDE_DEBUG("crtc%d -> enable %d, skip atomic_begin\n",
 				crtc->base.id, crtc->state->enable);
-		SDE_EVT32(DRMID(crtc), crtc->state->enable, crtc->state->active, SDE_EVTLOG_ERROR);
 		return;
 	}
 
@@ -3936,7 +3927,6 @@ static void sde_crtc_atomic_begin(struct drm_crtc *crtc,
 	 */
 
 end:
-	SDE_EVT32(crtc->base.id, sde_crtc->enabled, old_state->enable, old_state->active, SDE_EVTLOG_FUNC_EXIT);
 	SDE_ATRACE_END("crtc_atomic_begin");
 }
 
@@ -3999,7 +3989,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 		return;
 
 	SDE_ATRACE_BEGIN("sde_crtc_atomic_flush");
-	SDE_EVT32(crtc->base.id, crtc->state->active, SDE_EVTLOG_FUNC_ENTRY);
 	/*
 	 * For planes without commit update, drm framework will not add
 	 * those planes to current state since hardware update is not
@@ -4045,7 +4034,6 @@ static void sde_crtc_atomic_flush(struct drm_crtc *crtc,
 	}
 
 	/* Kickoff will be scheduled by outer layer */
-	SDE_EVT32(crtc->base.id, SDE_EVTLOG_FUNC_EXIT);
 	SDE_ATRACE_END("sde_crtc_atomic_flush");
 }
 
@@ -4689,8 +4677,6 @@ static struct drm_crtc_state *sde_crtc_duplicate_state(struct drm_crtc *crtc)
 		SDE_ERROR("failed to allocate state\n");
 		return NULL;
 	}
-	SDE_EVT32(DRMID(crtc), crtc->state->fd);
-	crtc->state->fd = 0;
 	/* duplicate value helper */
 	msm_property_duplicate_state(&sde_crtc->property_info,
 			old_cstate, cstate,
@@ -4899,7 +4885,6 @@ static void sde_crtc_handle_power_event(u32 event_type, void *arg)
 		power_on = 0;
 		msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 				(u8 *)&power_on);
-		SDE_EVT32(DRMID(crtc), event.type, power_on);
 		break;
 	default:
 		SDE_DEBUG("event:%d not handled\n", event_type);
@@ -4945,8 +4930,7 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	cstate = to_sde_crtc_state(crtc->state);
 	priv = crtc->dev->dev_private;
 
-	SDE_ERROR("crtc%d active=%d enable=%d\n",
-		crtc->base.id, crtc->state->active, crtc->state->enable);
+	SDE_DEBUG("crtc%d\n", crtc->base.id);
 
 	if (sde_kms_is_suspend_state(crtc->dev))
 		_sde_crtc_set_suspend(crtc, true);
@@ -4961,7 +4945,6 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	power_on = 0;
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 			(u8 *)&power_on);
-	SDE_EVT32(DRMID(crtc), event.type, power_on);
 
 	/* destination scaler if enabled should be reconfigured on resume */
 	if (cstate->num_ds_enabled)
@@ -5051,7 +5034,6 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 	 * reset the fence timeline if crtc will not be enabled for this commit
 	 */
 	if (!crtc->state->active || !crtc->state->enable) {
-		SDE_EVT32(crtc->state->active, crtc->state->enable, SDE_EVTLOG_ERROR);
 		sde_fence_signal(sde_crtc->output_fence,
 				ktime_get(), SDE_FENCE_RESET_TIMELINE);
 		for (i = 0; i < cstate->num_connectors; ++i)
@@ -5095,8 +5077,7 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 		return;
 	}
 
-	SDE_ERROR("crtc%d active=%d enable=%d\n",
-		crtc->base.id, crtc->state->active, crtc->state->enable);
+	SDE_DEBUG("crtc%d\n", crtc->base.id);
 	SDE_EVT32_VERBOSE(DRMID(crtc));
 	sde_crtc = to_sde_crtc(crtc);
 
@@ -5141,7 +5122,6 @@ static void sde_crtc_enable(struct drm_crtc *crtc,
 	power_on = 1;
 	msm_mode_object_event_notify(&crtc->base, crtc->dev, &event,
 			(u8 *)&power_on);
-	SDE_EVT32(DRMID(crtc), event.type, power_on);
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 
@@ -5597,14 +5577,10 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 		SDE_ERROR("Invalid kms\n");
 		return -EINVAL;
 	}
-	SDE_EVT32(crtc->base.id, sde_crtc->enabled, state->enable, state->active, SDE_EVTLOG_FUNC_ENTRY);
 
 	if (!state->enable || !state->active) {
 		SDE_DEBUG("crtc%d -> enable %d, active %d, skip atomic_check\n",
 				crtc->base.id, state->enable, state->active);
-		SDE_EVT32(crtc->base.id, sde_crtc->enabled, state->enable, state->active, SDE_EVTLOG_ERROR);
-		if (!sde_crtc->enabled)
-			WARN_ON(1);
 		goto end;
 	}
 
@@ -5858,7 +5834,6 @@ static int sde_crtc_atomic_check(struct drm_crtc *crtc,
 
 end:
 	_sde_crtc_rp_free_unused(&cstate->rp);
-	SDE_EVT32(crtc->base.id, sde_crtc->enabled, state->enable, state->active, SDE_EVTLOG_FUNC_EXIT);
 	return rc;
 }
 
@@ -6294,8 +6269,7 @@ static int _sde_crtc_get_output_fence(struct drm_crtc *crtc,
 	 * which will be incremented during the prepare commit phase
 	 */
 	offset++;
-	SDE_EVT32(DRMID(crtc), is_vid, offset, sde_crtc->enabled, sde_crtc->suspend);
-	SDE_EVT32(DRMID(crtc), state->active, state->enable);
+	SDE_EVT32(DRMID(crtc), is_vid, offset);
 
 	return sde_fence_create(sde_crtc->output_fence, val, offset);
 }
@@ -6379,7 +6353,6 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 		ret = _sde_crtc_get_output_fence(crtc, state, &fence_fd);
 		if (ret) {
 			SDE_ERROR("fence create failed rc:%d\n", ret);
-			state->fd = -1;
 			goto exit;
 		}
 
@@ -6388,12 +6361,9 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 		if (ret) {
 			SDE_ERROR("copy to user failed rc:%d\n", ret);
 			put_unused_fd(fence_fd);
-			state->fd = -1;
 			ret = -EFAULT;
 			goto exit;
 		}
-		state->fd = fence_fd;
-		SDE_EVT32(state->fd, ret);
 		break;
 	default:
 		/* nothing to do */
@@ -7252,7 +7222,7 @@ struct drm_crtc *sde_crtc_init(struct drm_device *dev, struct drm_plane *plane)
 	kthread_init_delayed_work(&sde_crtc->idle_notify_work,
 					__sde_crtc_idle_notify_work);
 
-	SDE_ERROR("%s: successfully initialized crtc\n", sde_crtc->name);
+	SDE_DEBUG("%s: successfully initialized crtc\n", sde_crtc->name);
 	return crtc;
 }
 
