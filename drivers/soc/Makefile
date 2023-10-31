@@ -36,6 +36,3 @@ obj-y                     += oplus/sensor/
 #ifdef OPLUS_FEATURE_SENSOR_SMEM
 obj-$(CONFIG_HORAE_THERMAL_SHELL) += oplus/thermal/
 #endif /* OPLUS_FEATURE_SENSOR_SMEM */
-
-#Add for NandSwap
-obj-$(CONFIG_NANDSWAP)		+= oplus/oplus_nandswap/
