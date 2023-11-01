@@ -32,6 +32,7 @@ extern int oplus_dimlayer_hbm;
 int oplus_aod_dim_alpha = CUST_A_NO;
 extern int oplus_panel_alpha;
 extern int hbm_mode;
+extern int oplus_skip_pcc_override;
 extern bool oplus_ffl_trigger_finish;
 
 static struct oplus_brightness_alpha brightness_alpha_lut[] = {
@@ -642,7 +643,8 @@ int sde_crtc_config_fingerprint_dim_layer(struct drm_crtc_state *crtc_state,
 
 bool is_skip_pcc(struct drm_crtc *crtc)
 {
-	if (sde_crtc_get_fingerprint_pressed(crtc->state))
+	if (sde_crtc_get_fingerprint_pressed(crtc->state)
+	    && oplus_skip_pcc_override == 0)
 		return true;
 
 	return false;
