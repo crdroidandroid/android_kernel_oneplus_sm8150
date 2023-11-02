@@ -18,6 +18,7 @@
 #ifdef CONFIG_DEBUG_FS
 extern struct dentry *blk_debugfs_root;
 #endif
+
 struct blk_flush_queue {
 	unsigned int		flush_queue_delayed:1;
 	unsigned int		flush_pending_idx:1;
@@ -160,6 +161,7 @@ static inline struct request *__elv_next_request(struct request_queue *q)
 			rq = list_entry_rq(q->queue_head.next);
 			return rq;
 		}
+
 		/*
 		 * Flush request is running and flush request isn't queueable
 		 * in the drive, we can hold the queue till flush request is

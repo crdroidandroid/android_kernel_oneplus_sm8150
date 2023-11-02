@@ -238,6 +238,7 @@ static enum hrtimer_restart alarmtimer_fired(struct hrtimer *timer)
 
 	if (alarm->function)
 		restart = alarm->function(alarm, base->gettime());
+
 	spin_lock_irqsave(&base->lock, flags);
 	if (restart != ALARMTIMER_NORESTART) {
 		hrtimer_set_expires(&alarm->timer, alarm->node.expires);

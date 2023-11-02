@@ -3395,7 +3395,6 @@ void si_swapinfo(struct sysinfo *val)
 	}
 	val->freeswap = atomic_long_read(&nr_swap_pages) + nr_to_be_unused;
 	val->totalswap = total_swap_pages + nr_to_be_unused;
-
 	spin_unlock(&swap_lock);
 }
 

@@ -111,7 +111,6 @@ int pm_autosleep_set_state(suspend_state_t state)
 	}
 
 	mutex_unlock(&autosleep_lock);
-
 	return 0;
 }
 

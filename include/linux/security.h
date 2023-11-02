@@ -1838,4 +1838,5 @@ static inline int security_perf_event_write(struct perf_event *event)
 }
 #endif /* CONFIG_SECURITY */
 #endif /* CONFIG_PERF_EVENTS */
+
 #endif /* ! __LINUX_SECURITY_H */

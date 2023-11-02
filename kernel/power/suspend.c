@@ -661,7 +661,6 @@ static int enter_state(suspend_state_t state)
 	} else if (!valid_state(state)) {
 		return -EINVAL;
 	}
-
 	if (!mutex_trylock(&pm_mutex))
 		return -EBUSY;
 

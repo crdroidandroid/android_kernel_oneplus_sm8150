@@ -653,6 +653,7 @@ asmlinkage __visible void __init start_kernel(void)
 	WARN(!irqs_disabled(), "Interrupts were enabled early\n");
 	early_boot_irqs_disabled = false;
 	local_irq_enable();
+
 	kmem_cache_init_late();
 
 	/*
@@ -717,6 +718,7 @@ asmlinkage __visible void __init start_kernel(void)
 	cgroup_init();
 	taskstats_init_early();
 	delayacct_init();
+
 
 	acpi_subsystem_init();
 	arch_post_acpi_subsys_init();
@@ -1047,7 +1049,6 @@ static int __ref kernel_init(void *unused)
 			;
 	}
 #endif
-
 	if (ramdisk_execute_command) {
 		ret = run_init_process(ramdisk_execute_command);
 		if (!ret)
