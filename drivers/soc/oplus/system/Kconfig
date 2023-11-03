@@ -33,7 +33,6 @@ config OPLUS_FEATURE_DETAILHEAD
 source "drivers/soc/oplus/system/oplus_project/Kconfig"
 source "drivers/soc/oplus/system/project_info/Kconfig"
 source "drivers/soc/oplus/system/cmdline_parser/Kconfig"
-source "drivers/soc/oplus/system/dump_device_info/Kconfig"
 #ifdef OPLUS_FEATURE_ESIM
 source "drivers/soc/oplus/system/oplus_gpio/Kconfig"
 #endif /* OPLUS_FEATURE_ESIM */
