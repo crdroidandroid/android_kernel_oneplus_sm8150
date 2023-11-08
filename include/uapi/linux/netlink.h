@@ -37,9 +37,6 @@
 #define NETLINK_OPLUS_NF_HOOKS	32
 #endif /* OPLUS_FEATURE_WIFI_LUCKYMONEY */
 
-#ifdef OPLUS_FEATURE_HANS_FREEZE
-#define NETLINK_OPLUS_HANS       29      /* Socket for freezing solution*/
-#endif /*OPLUS_FEATURE_HANS_FREEZE*/
 //#ifdef OPLUS_FEATURE_WIFI_SLA
 #define NETLINK_OPLUS_SLA  33      /*SLA NETLINK SOCK*/
 //#endif /* OPLUS_FEATURE_WIFI_SLA */
