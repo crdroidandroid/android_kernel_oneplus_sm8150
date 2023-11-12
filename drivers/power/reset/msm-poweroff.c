@@ -92,7 +92,6 @@ static struct notifier_block panic_blk = {
 #endif
 
 static struct kobject dload_kobj;
-static struct kobject dload_kobj;
 static int dload_type = SCM_DLOAD_FULLDUMP;
 static void *dload_mode_addr;
 static void *dload_type_addr;
@@ -102,6 +101,7 @@ static void *emergency_dload_mode_addr;
 static void __iomem *kaslr_imem_addr;
 #endif
 static bool scm_dload_supported;
+
 static int dload_set(const char *val, const struct kernel_param *kp);
 /* interface for exporting attributes */
 struct reset_attribute {
@@ -141,44 +141,6 @@ int scm_set_dload_mode(int arg1, int arg2)
 	return scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_BOOT, SCM_DLOAD_CMD),
 				&desc);
 }
-
-
-#ifdef OPLUS_BUG_STABILITY
-bool is_fulldump_enable(void)
-{
-	return download_mode && (dload_type & SCM_DLOAD_FULLDUMP);
-}
-
-void oplus_switch_fulldump(int on)
-{
-	int ret;
-
-	if (dload_mode_addr) {
-		__raw_writel(0xE47B337D, dload_mode_addr);
-		__raw_writel(0xCE14091A,
-			dload_mode_addr + sizeof(unsigned int));
-		mb();
-	}
-	if(on){
-		ret = scm_set_dload_mode(SCM_DLOAD_FULLDUMP, 0);
-		if (ret)
-			pr_err("Failed to set secure DLOAD mode: %d\n", ret);
-		dload_type = SCM_DLOAD_FULLDUMP;
-	}else{
-		ret = scm_set_dload_mode(SCM_DLOAD_MINIDUMP, 0);
-		if (ret)
-			pr_err("Failed to set secure DLOAD mode: %d\n", ret);
-		dload_type = SCM_DLOAD_MINIDUMP;
-	}
-
-	if(dload_type == SCM_DLOAD_MINIDUMP)
-		__raw_writel(EMMC_DLOAD_TYPE, dload_type_addr);
-	else
-		__raw_writel(0, dload_type_addr);
-	dload_mode_enabled = on;
-}
-EXPORT_SYMBOL(oplus_switch_fulldump);
-#endif /* OPLUS_BUG_STABILITY */
 
 static void set_dload_mode(int on)
 {
@@ -229,11 +191,11 @@ static void enable_emergency_dload_mode(void)
 		/* Need disable the pmic wdt, then the emergency dload mode
 		 * will not auto reset.
 		 */
+		qpnp_pon_wd_config(0);
 		/* Make sure all the cookied are flushed to memory */
 		mb();
 	}
-    
-    qpnp_pon_wd_config(0);
+
 	ret = scm_set_dload_mode(SCM_EDLOAD_MODE, 0);
 	if (ret)
 		pr_err("Failed to set secure EDLOAD mode: %d\n", ret);
