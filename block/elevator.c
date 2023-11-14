@@ -581,22 +581,15 @@ void elv_bio_merged(struct request_queue *q, struct request *rq,
 #ifdef CONFIG_PM
 static void blk_pm_requeue_request(struct request *rq)
 {
-	if (rq->q->dev && !(rq->rq_flags & RQF_PM) &&
-	    (rq->rq_flags & (RQF_PM_ADDED | RQF_FLUSH_SEQ))) {
-		rq->rq_flags &= ~RQF_PM_ADDED;
+	if (rq->q->dev && !(rq->rq_flags & RQF_PM))
 		rq->q->nr_pending--;
-	}
 }
 
 static void blk_pm_add_request(struct request_queue *q, struct request *rq)
 {
-	if (q->dev && !(rq->rq_flags & RQF_PM)) {
-		rq->rq_flags |= RQF_PM_ADDED;
-		if (q->nr_pending++ == 0 &&
-		    (q->rpm_status == RPM_SUSPENDED ||
-		     q->rpm_status == RPM_SUSPENDING))
-			pm_request_resume(q->dev);
-	}
+	if (q->dev && !(rq->rq_flags & RQF_PM) && q->nr_pending++ == 0 &&
+	    (q->rpm_status == RPM_SUSPENDED || q->rpm_status == RPM_SUSPENDING))
+		pm_request_resume(q->dev);
 }
 #else
 static inline void blk_pm_requeue_request(struct request *rq) {}
@@ -646,8 +639,6 @@ void elv_drain_elevator(struct request_queue *q)
 
 void __elv_add_request(struct request_queue *q, struct request *rq, int where)
 {
-	struct list_head *entry;
-
 	trace_block_rq_insert(q, rq);
 
 	blk_pm_add_request(q, rq);
@@ -669,31 +660,7 @@ void __elv_add_request(struct request_queue *q, struct request *rq, int where)
 	case ELEVATOR_INSERT_REQUEUE:
 	case ELEVATOR_INSERT_FRONT:
 		rq->rq_flags |= RQF_SOFTBARRIER;
-	// list_add(&rq->queuelist, &q->queue_head);
-		entry = &q->queue_head;
-#ifdef CONFIG_PM
-		/*
-		* PM requests always stay in front, otherwise they can be
-		* starved by non-PM requests whose RQF_SOFTBARRIER flag is
-		* set, see elv_next_request().
-		*/
-		if (rq->q->dev && !(rq->rq_flags & RQF_PM)) {
-			list_for_each(entry, &q->queue_head) {
-				struct request *pos = list_entry_rq(entry);
-
-				/* Found the first non-PM request */
-				if (!(pos->rq_flags & RQF_PM)) {
-					entry = entry->prev;
-					break;
-				}
-
-				if (list_is_last(entry, &q->queue_head))
-					break;
-			}
-		}
-#endif
-		list_add(&rq->queuelist, entry);
-
+		list_add(&rq->queuelist, &q->queue_head);
 		break;
 
 	case ELEVATOR_INSERT_BACK:
