@@ -1308,7 +1308,7 @@ static int __init qpnp_lbc_init(void)
 {
 	return spmi_driver_register(&qpnp_lbc_driver);
 }
-module_init(qpnp_lbc_init);
+late_initcall(qpnp_lbc_init);
 
 static void __exit qpnp_lbc_exit(void)
 {
