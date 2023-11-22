@@ -105,7 +105,3 @@ obj-$(CONFIG_HARDENED_USERCOPY) += usercopy.o
 obj-$(CONFIG_PERCPU_STATS) += percpu-stats.o
 obj-$(CONFIG_HMM) += hmm.o
 obj-$(CONFIG_PROCESS_RECLAIM)	+= process_reclaim.o
-
-#if defined(OPLUS_FEATURE_MULTI_FREEAREA)
-obj-$(CONFIG_PHYSICAL_ANTI_FRAGMENTATION) += multi_freearea.o
-#endif

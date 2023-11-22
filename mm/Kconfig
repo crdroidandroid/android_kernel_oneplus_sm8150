@@ -852,14 +852,6 @@ config FORCE_ALLOC_FROM_DMA_ZONE
 
 	  If unsure, say "n".
 
-#ifdef OPLUS_FEATURE_MULTI_FREEAREA
-config PHYSICAL_ANTI_FRAGMENTATION
-	bool "Physical memory anti-fragmentation"
-	default y
-	help
-	 Turn on the function of Physical memory anti-fragmentation.
-#endif /* OPLUS_FEATURE_MULTI_FREEAREA */
-
 config DAYAMIC_TUNNING_SWAPPINESS
 	bool "tunning swappiess depends on file_pages size"
 	default n
