@@ -2289,7 +2289,6 @@ static void get_scan_count(struct lruvec *lruvec, struct mem_cgroup *memcg,
 	unsigned long anon, file;
 	unsigned long ap, fp;
 	enum lru_list lru;
-	unsigned long totalswap = total_swap_pages;
 
 	/* If we have no swap space, do not bother scanning anon pages. */
 	if (!sc->may_swap || mem_cgroup_get_nr_swap_pages(memcg) <= 0) {
