@@ -4392,8 +4392,6 @@ static int dwc3_msm_remove(struct platform_device *pdev)
 		mdwc->dpdm_nb.notifier_call = NULL;
 	}
 
-	device_remove_file(&pdev->dev, &dev_attr_usb_data_enabled);
-
 	if (mdwc->usb_psy)
 		power_supply_put(mdwc->usb_psy);
 
