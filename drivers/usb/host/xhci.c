@@ -92,7 +92,7 @@ int xhci_handshake(void __iomem *ptr, u32 mask, u32 done, u64 timeout_us)
 }
 
 int xhci_handshake_check_state(struct xhci_hcd *xhci,
-		void __iomem *ptr, u32 mask, u32 done, int usec)
+		void __iomem *ptr, u32 mask, u32 done, u64 timeout_us)
 {
 	u32	result;
 
@@ -107,8 +107,8 @@ int xhci_handshake_check_state(struct xhci_hcd *xhci,
 		if (result == done)
 			return 0;
 		udelay(1);
-		usec--;
-	} while (usec > 0);
+		timeout_us--;
+	} while (timeout_us > 0);
 	return -ETIMEDOUT;
 }
 
@@ -237,7 +237,8 @@ int xhci_reset(struct xhci_hcd *xhci, u64 timeout_us)
 	if (xhci->quirks & XHCI_INTEL_HOST)
 		udelay(1000);
 
-        ret = xhci_handshake(&xhci->op_regs->command, CMD_RESET, 0, timeout_us);
+	ret = xhci_handshake_check_state(xhci, &xhci->op_regs->command,
+			CMD_RESET, 0, timeout_us);
 	if (ret)
 		return ret;
 
