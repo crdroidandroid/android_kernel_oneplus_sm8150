@@ -57,51 +57,13 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 ********************************************************************************
-
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #include "vl53l1_ll_def.h"
 #include "vl53l1_ll_device.h"
 #include "vl53l1_platform_log.h"
 #include "vl53l1_zone_presets.h"
-
 
 #define LOG_FUNCTION_START(fmt, ...) \
 	_LOG_FUNCTION_START(VL53L1_TRACE_MODULE_CORE, fmt, ##__VA_ARGS__)
@@ -110,7 +72,6 @@
 #define LOG_FUNCTION_END_FMT(status, fmt, ...) \
 	_LOG_FUNCTION_END_FMT(VL53L1_TRACE_MODULE_CORE,\
 			status, fmt, ##__VA_ARGS__)
-
 
 VL53L1_Error VL53L1_init_zone_config_structure(
 	uint8_t x_off,
@@ -123,11 +84,6 @@ VL53L1_Error VL53L1_init_zone_config_structure(
 	uint8_t height,
 	VL53L1_zone_config_t   *pdata)
 {
-
-
-
-
-
 	VL53L1_Error  status = VL53L1_ERROR_NONE;
 
 	uint8_t  x  = 0;
@@ -144,7 +100,6 @@ VL53L1_Error VL53L1_init_zone_config_structure(
 		for (y = 0 ; y <  y_zones ; y++) {
 
 			if (i < VL53L1_MAX_USER_ZONES) {
-
 				pdata->active_zones = (uint8_t)i;
 				pdata->user_zones[i].height   = height;
 				pdata->user_zones[i].width    = width;
@@ -160,35 +115,20 @@ VL53L1_Error VL53L1_init_zone_config_structure(
 
 	status = VL53L1_init_zone_config_histogram_bins(pdata);
 
-
 	LOG_FUNCTION_END(status);
 
 	return status;
 }
 
-
 VL53L1_Error VL53L1_zone_preset_xtalk_planar(
 	VL53L1_general_config_t	*pgeneral,
 	VL53L1_zone_config_t    *pzone_cfg)
 {
-
-
-
-
-
-
 	VL53L1_Error  status = VL53L1_ERROR_NONE;
 
 	LOG_FUNCTION_START("");
 
-
-
-
-
-
 	pgeneral->global_config__stream_divider = 0x05;
-
-
 
 	pzone_cfg->active_zones                 = 0x04;
 
@@ -212,9 +152,6 @@ VL53L1_Error VL53L1_zone_preset_xtalk_planar(
 	pzone_cfg->user_zones[3].x_centre       = 8;
 	pzone_cfg->user_zones[3].y_centre       = 12;
 
-
-
-
 	pzone_cfg->user_zones[4].height         = 15;
 	pzone_cfg->user_zones[4].width          = 15;
 	pzone_cfg->user_zones[4].x_centre       = 8;
@@ -222,21 +159,14 @@ VL53L1_Error VL53L1_zone_preset_xtalk_planar(
 
 	status = VL53L1_init_zone_config_histogram_bins(pzone_cfg);
 
-
 	LOG_FUNCTION_END(status);
 
 	return status;
 }
 
-
 VL53L1_Error VL53L1_init_zone_config_histogram_bins(
 	VL53L1_zone_config_t   *pdata)
 {
-
-
-
-
-
 	VL53L1_Error  status = VL53L1_ERROR_NONE;
 
 	uint8_t i;
@@ -250,4 +180,3 @@ VL53L1_Error VL53L1_init_zone_config_histogram_bins(
 
 	return status;
 }
-
