@@ -57,78 +57,8 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 ********************************************************************************
-
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #include "vl53l1_api_core.h"
 #include "vl53l1_api_strings.h"
@@ -142,7 +72,6 @@
 #define LOG_FUNCTION_END_FMT(status, fmt, ...) \
 	_LOG_FUNCTION_END_FMT(VL53L1_TRACE_MODULE_API, status, fmt, \
 			##__VA_ARGS__)
-
 
 VL53L1_Error VL53L1_get_range_status_string(
 	uint8_t   RangeStatus,
@@ -192,7 +121,6 @@ VL53L1_Error VL53L1_get_range_status_string(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_get_pal_state_string(
 	VL53L1_State PalStateCode,
 	char *pPalStateString)
@@ -237,7 +165,6 @@ VL53L1_Error VL53L1_get_pal_state_string(
 		VL53L1_COPYSTRING(pPalStateString,
 			VL53L1_STRING_STATE_ERROR);
 	break;
-
 	default:
 		VL53L1_COPYSTRING(pPalStateString,
 			VL53L1_STRING_STATE_UNKNOWN);
@@ -330,5 +257,3 @@ VL53L1_Error VL53L1_get_limit_check_info(uint16_t LimitCheckId,
 	LOG_FUNCTION_END(Status);
 	return Status;
 }
-
-

@@ -57,55 +57,12 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 ********************************************************************************
-
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #ifdef _MSC_VER
 #define snprintf _snprintf
 #endif
-
-
-
-
-
 
 #include "vl53l1_ll_def.h"
 #include "vl53l1_platform.h"
@@ -115,10 +72,6 @@
 #include "vl53l1_nvm_structs.h"
 #include "vl53l1_nvm_map.h"
 #include "vl53l1_nvm.h"
-
-
-
-
 
 #define LOG_FUNCTION_START(fmt, ...) \
 	_LOG_FUNCTION_START(VL53L1_TRACE_MODULE_NVM, fmt, ##__VA_ARGS__)
@@ -132,54 +85,25 @@
 	_LOG_TRACE_PRINT(VL53L1_TRACE_MODULE_NVM, \
 	level, VL53L1_TRACE_FUNCTION_NONE, ##__VA_ARGS__)
 
-
 VL53L1_Error VL53L1_nvm_enable(
 	VL53L1_DEV      Dev,
 	uint16_t        nvm_ctrl_pulse_width,
 	int32_t         nvm_power_up_delay_us)
 {
-
-
-
-
-
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
 
 	LOG_FUNCTION_START("");
 
-
-
-
-
 	if (status == VL53L1_ERROR_NONE)
-
 		status = VL53L1_disable_firmware(Dev);
-
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_enable_powerforce(Dev);
-
-
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_WaitUs(
 			Dev,
 			VL53L1_ENABLE_POWERFORCE_SETTLING_TIME_US);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_WrByte(
@@ -187,25 +111,16 @@ VL53L1_Error VL53L1_nvm_enable(
 					VL53L1_RANGING_CORE__NVM_CTRL__PDN,
 					0x01);
 
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_WrByte(
 					Dev,
 					VL53L1_RANGING_CORE__CLK_CTRL1,
 					0x05);
 
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_WaitUs(
 					Dev,
 					nvm_power_up_delay_us);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_WrByte(
@@ -222,9 +137,7 @@ VL53L1_Error VL53L1_nvm_enable(
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
 
 VL53L1_Error VL53L1_nvm_read(
 	VL53L1_DEV    Dev,
@@ -232,16 +145,6 @@ VL53L1_Error VL53L1_nvm_read(
 	uint8_t       count,
 	uint8_t      *pdata)
 {
-
-
-
-
-
-
-
-
-
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 	uint8_t      nvm_addr = 0;
 
@@ -260,26 +163,17 @@ VL53L1_Error VL53L1_nvm_read(
 	for (nvm_addr = start_address;
 		nvm_addr < (start_address+count) ; nvm_addr++) {
 
-
-
-
 		if (status == VL53L1_ERROR_NONE)
 			status = VL53L1_WrByte(
 				Dev,
 				VL53L1_RANGING_CORE__NVM_CTRL__ADDR,
 				nvm_addr);
 
-
-
-
 		if (status == VL53L1_ERROR_NONE)
 			status = VL53L1_WrByte(
 				Dev,
 				VL53L1_RANGING_CORE__NVM_CTRL__READN,
 				0x00);
-
-
-
 
 		if (status == VL53L1_ERROR_NONE)
 			status = VL53L1_WaitUs(
@@ -291,8 +185,6 @@ VL53L1_Error VL53L1_nvm_read(
 				Dev,
 				VL53L1_RANGING_CORE__NVM_CTRL__READN,
 				0x01);
-
-
 
 		if (status == VL53L1_ERROR_NONE)
 			status = VL53L1_ReadMulti(
@@ -306,12 +198,7 @@ VL53L1_Error VL53L1_nvm_read(
 			"NVM address : 0x%02X = 0x%02X%02X%02X%02X\n",
 			nvm_addr, *pdata, *(pdata+1), *(pdata+2), *(pdata+3));
 
-
-
-
 		pdata = pdata + 4;
-
-
 	}
 
 	LOG_FUNCTION_END(status);
@@ -319,28 +206,18 @@ VL53L1_Error VL53L1_nvm_read(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_nvm_disable(
 	VL53L1_DEV    Dev)
 {
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
 
 	LOG_FUNCTION_START("");
 
 	if (status == VL53L1_ERROR_NONE)
-
 		status = VL53L1_WrByte(
 					Dev,
 					VL53L1_RANGING_CORE__NVM_CTRL__READN,
 					0x01);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_WrByte(
@@ -348,14 +225,8 @@ VL53L1_Error VL53L1_nvm_disable(
 					VL53L1_RANGING_CORE__NVM_CTRL__PDN,
 					0x00);
 
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_disable_powerforce(Dev);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_enable_firmware(Dev);
@@ -363,23 +234,13 @@ VL53L1_Error VL53L1_nvm_disable(
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
 
 VL53L1_Error VL53L1_nvm_format_decode(
 	uint16_t                   buf_size,
 	uint8_t                   *pbuffer,
 	VL53L1_decoded_nvm_data_t *pdata)
 {
-
-
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
 
 	uint8_t    i        = 0;
@@ -655,9 +516,6 @@ VL53L1_Error VL53L1_nvm_format_decode(
 			0,
 			0);
 
-
-
-
 	ptmp = pbuffer + VL53L1_NVM__EWS__SPAD_ENABLES_RTN_0_;
 	for (i = 0 ; i < VL53L1_RTN_SPAD_BUFFER_SIZE ; i++)
 		pdata->nvm__ews__spad_enables_rtn[i] = *ptmp++;
@@ -674,9 +532,6 @@ VL53L1_Error VL53L1_nvm_format_decode(
 	for (i = 0 ; i < VL53L1_REF_SPAD_BUFFER_SIZE ; i++)
 		pdata->nvm__ews__spad_enables_ref__loc3[i] = *ptmp++;
 
-
-
-
 	ptmp = pbuffer + VL53L1_NVM__FMT__SPAD_ENABLES_RTN_0_;
 	for (i = 0 ; i < VL53L1_RTN_SPAD_BUFFER_SIZE ; i++)
 		pdata->nvm__fmt__spad_enables_rtn[i] = *ptmp++;
@@ -692,7 +547,6 @@ VL53L1_Error VL53L1_nvm_format_decode(
 	ptmp = pbuffer + VL53L1_NVM__FMT__SPAD_ENABLES_REF__LOC3_0_;
 	for (i = 0 ; i < VL53L1_REF_SPAD_BUFFER_SIZE ; i++)
 		pdata->nvm__fmt__spad_enables_ref__loc3[i] = *ptmp++;
-
 
 	pdata->nvm__fmt__roi_config__mode_roi_centre_spad =
 		(uint8_t)VL53L1_i2c_decode_with_mask(
@@ -885,18 +739,12 @@ VL53L1_Error VL53L1_nvm_format_decode(
 		0,
 		0);
 
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status =
 		VL53L1_nvm_decode_optical_centre(
 			buf_size,
 			pbuffer + VL53L1_NVM__FMT__OPTICAL_CENTRE_DATA_INDEX,
 			&(pdata->fmt_optical_centre));
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status =
@@ -905,9 +753,6 @@ VL53L1_Error VL53L1_nvm_format_decode(
 			pbuffer + VL53L1_NVM__FMT__CAL_PEAK_RATE_MAP_DATA_INDEX,
 			&(pdata->fmt_peak_rate_map));
 
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status =
 		VL53L1_nvm_decode_additional_offset_cal_data(
@@ -915,9 +760,6 @@ VL53L1_Error VL53L1_nvm_format_decode(
 			pbuffer +
 			VL53L1_NVM__FMT__ADDITIONAL_OFFSET_CAL_DATA_INDEX,
 			&(pdata->fmt_add_offset_data));
-
-
-
 
 	pptmp[0] = VL53L1_NVM__FMT__RANGE_RESULTS__140MM_MM_PRE_RANGE;
 	pptmp[1] = VL53L1_NVM__FMT__RANGE_RESULTS__140MM_DARK;
@@ -932,7 +774,6 @@ VL53L1_Error VL53L1_nvm_format_decode(
 					pbuffer + pptmp[i],
 					&(pdata->fmt_range_data[i]));
 	}
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status =
@@ -951,26 +792,19 @@ VL53L1_Error VL53L1_nvm_format_decode(
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
 
 VL53L1_Error VL53L1_nvm_decode_optical_centre(
 	uint16_t                    buf_size,
 	uint8_t                    *pbuffer,
 	VL53L1_optical_centre_t    *pdata)
 {
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 
 	uint16_t  tmp = 0;
 
 	if (buf_size < VL53L1_NVM__FMT__OPTICAL_CENTRE_DATA_SIZE)
 		return VL53L1_ERROR_BUFFER_TOO_SMALL;
-
-
-
-
 
 	tmp  = 0x0100;
 	tmp -= (uint16_t)*(pbuffer + 2);
@@ -983,13 +817,11 @@ VL53L1_Error VL53L1_nvm_decode_optical_centre(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_nvm_decode_cal_peak_rate_map(
 	uint16_t                    buf_size,
 	uint8_t                    *pbuffer,
 	VL53L1_cal_peak_rate_map_t *pdata)
 {
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 
 	uint8_t   *ptmp = NULL;
@@ -1020,13 +852,11 @@ VL53L1_Error VL53L1_nvm_decode_cal_peak_rate_map(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_nvm_decode_additional_offset_cal_data(
 	uint16_t                             buf_size,
 	uint8_t                             *pbuffer,
 	VL53L1_additional_offset_cal_data_t *pdata)
 {
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 
 	if (buf_size < VL53L1_NVM__FMT__ADDITIONAL_OFFSET_CAL_DATA_SIZE)
@@ -1047,13 +877,11 @@ VL53L1_Error VL53L1_nvm_decode_additional_offset_cal_data(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_nvm_decode_fmt_range_results_data(
 	uint16_t                             buf_size,
 	uint8_t                             *pbuffer,
 	VL53L1_decoded_nvm_fmt_range_data_t *pdata)
 {
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 
 	if (buf_size < VL53L1_NVM__FMT__RANGE_RESULTS__SIZE_BYTES)
@@ -1089,13 +917,11 @@ VL53L1_Error VL53L1_nvm_decode_fmt_range_results_data(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_nvm_decode_fmt_info(
 	uint16_t                       buf_size,
 	uint8_t                       *pbuffer,
 	VL53L1_decoded_nvm_fmt_info_t *pdata)
 {
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 
 	if (buf_size < VL53L1_NVM_SIZE_IN_BYTES)
@@ -1228,7 +1054,6 @@ VL53L1_Error VL53L1_nvm_decode_fmt_info(
 			2,
 			0);
 	pdata->nvm__fmt__fgc[18] = 0x00;
-
 			pdata->nvm__fmt__test_program_major =
 		(uint8_t)VL53L1_i2c_decode_with_mask(
 			1,
@@ -1310,13 +1135,11 @@ VL53L1_Error VL53L1_nvm_decode_fmt_info(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_nvm_decode_ews_info(
 	uint16_t                       buf_size,
 	uint8_t                       *pbuffer,
 	VL53L1_decoded_nvm_ews_info_t *pdata)
 {
-
 	VL53L1_Error status   = VL53L1_ERROR_NONE;
 
 	if (buf_size < VL53L1_NVM_SIZE_IN_BYTES)
@@ -1406,9 +1229,7 @@ VL53L1_Error VL53L1_nvm_decode_ews_info(
 			0x00000FC0,
 			6,
 			32);
-
 	pdata->nvm__ews__lot[7] = 0x00;
-
 	pdata->nvm__ews__wafer =
 		(uint8_t)VL53L1_i2c_decode_with_mask(
 			1,
@@ -1435,7 +1256,6 @@ VL53L1_Error VL53L1_nvm_decode_ews_info(
 
 }
 
-
 void VL53L1_nvm_format_encode(
 	VL53L1_decoded_nvm_data_t *pnvm_info,
 	uint8_t                   *pnvm_data)
@@ -1444,40 +1264,21 @@ void VL53L1_nvm_format_encode(
 	SUPPRESS_UNUSED_WARNING(pnvm_data);
 }
 
-
 VL53L1_Error VL53L1_read_nvm_raw_data(
 	VL53L1_DEV     Dev,
 	uint8_t        start_address,
 	uint8_t        count,
 	uint8_t       *pnvm_raw_data)
 {
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
 
 	LOG_FUNCTION_START("");
 
-
-
-
-
-
 	if (status == VL53L1_ERROR_NONE)
-
 		status = VL53L1_nvm_enable(
 					Dev,
 					0x0004,
 					VL53L1_NVM_POWER_UP_DELAY_US);
-
-
-
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_nvm_read(
@@ -1486,38 +1287,20 @@ VL53L1_Error VL53L1_read_nvm_raw_data(
 			count,
 			pnvm_raw_data);
 
-
-
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_nvm_disable(Dev);
 
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
 
 VL53L1_Error VL53L1_read_nvm(
 	VL53L1_DEV                 Dev,
 	uint8_t                    nvm_format,
 	VL53L1_decoded_nvm_data_t *pnvm_info)
 {
-
-
-
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
-
-
 
 	uint8_t nvm_data[2*VL53L1_NVM_SIZE_IN_BYTES];
 
@@ -1525,24 +1308,11 @@ VL53L1_Error VL53L1_read_nvm(
 
 	SUPPRESS_UNUSED_WARNING(nvm_format);
 
-
-
-
 	status = VL53L1_read_nvm_raw_data(
 				Dev,
 				0,
 				VL53L1_NVM_SIZE_IN_BYTES >> 2,
 				nvm_data);
-
-
-
-
-
-
-
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_nvm_format_decode(
@@ -1553,30 +1323,17 @@ VL53L1_Error VL53L1_read_nvm(
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
 
 VL53L1_Error VL53L1_read_nvm_optical_centre(
 	VL53L1_DEV                        Dev,
 	VL53L1_optical_centre_t          *pcentre)
 {
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
-
-
 
 	uint8_t nvm_data[2*VL53L1_NVM__FMT__OPTICAL_CENTRE_DATA_SIZE];
 
 	LOG_FUNCTION_START("");
-
-
-
 
 	status =
 		VL53L1_read_nvm_raw_data(
@@ -1586,9 +1343,6 @@ VL53L1_Error VL53L1_read_nvm_optical_centre(
 			(uint8_t)(VL53L1_NVM__FMT__OPTICAL_CENTRE_DATA_SIZE
 					>> 2),
 			nvm_data);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status =
@@ -1602,27 +1356,15 @@ VL53L1_Error VL53L1_read_nvm_optical_centre(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_read_nvm_cal_peak_rate_map(
 	VL53L1_DEV                           Dev,
 	VL53L1_cal_peak_rate_map_t          *pcal_data)
 {
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
-
-
 
 	uint8_t nvm_data[2*VL53L1_NVM__FMT__CAL_PEAK_RATE_MAP_DATA_SIZE];
 
 	LOG_FUNCTION_START("");
-
-
-
 
 	status =
 		VL53L1_read_nvm_raw_data(
@@ -1632,9 +1374,6 @@ VL53L1_Error VL53L1_read_nvm_cal_peak_rate_map(
 			(uint8_t)(VL53L1_NVM__FMT__CAL_PEAK_RATE_MAP_DATA_SIZE
 					>> 2),
 			nvm_data);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status =
@@ -1648,32 +1387,15 @@ VL53L1_Error VL53L1_read_nvm_cal_peak_rate_map(
 	return status;
 }
 
-
 VL53L1_Error VL53L1_read_nvm_additional_offset_cal_data(
 	VL53L1_DEV                           Dev,
 	VL53L1_additional_offset_cal_data_t *pcal_data)
 {
-
-
-
-
-
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
-
-
 
 	uint8_t nvm_data[2*VL53L1_NVM__FMT__ADDITIONAL_OFFSET_CAL_DATA_SIZE];
 
 	LOG_FUNCTION_START("");
-
-
-
 
 	status =
 		VL53L1_read_nvm_raw_data(
@@ -1684,9 +1406,6 @@ VL53L1_Error VL53L1_read_nvm_additional_offset_cal_data(
 			VL53L1_NVM__FMT__ADDITIONAL_OFFSET_CAL_DATA_SIZE >> 2),
 			nvm_data);
 
-
-
-
 	if (status == VL53L1_ERROR_NONE)
 		status = VL53L1_nvm_decode_additional_offset_cal_data(
 			VL53L1_NVM__FMT__ADDITIONAL_OFFSET_CAL_DATA_SIZE,
@@ -1696,44 +1415,24 @@ VL53L1_Error VL53L1_read_nvm_additional_offset_cal_data(
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
 
 VL53L1_Error VL53L1_read_nvm_fmt_range_results_data(
 	VL53L1_DEV                           Dev,
 	uint16_t                             range_results_select,
 	VL53L1_decoded_nvm_fmt_range_data_t *prange_data)
 {
-
-
-
-
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
-
-
 
 	uint8_t nvm_data[2*VL53L1_NVM__FMT__RANGE_RESULTS__SIZE_BYTES];
 
 	LOG_FUNCTION_START("");
-
-
-
 
 	status = VL53L1_read_nvm_raw_data(
 		Dev,
 		(uint8_t)(range_results_select >> 2),
 		(uint8_t)(VL53L1_NVM__FMT__RANGE_RESULTS__SIZE_BYTES >> 2),
 		nvm_data);
-
-
-
 
 	if (status == VL53L1_ERROR_NONE)
 		status =
@@ -1745,7 +1444,4 @@ VL53L1_Error VL53L1_read_nvm_fmt_range_results_data(
 	LOG_FUNCTION_END(status);
 
 	return status;
-
 }
-
-
