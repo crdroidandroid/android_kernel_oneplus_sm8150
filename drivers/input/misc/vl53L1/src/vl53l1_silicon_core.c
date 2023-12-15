@@ -57,53 +57,14 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 ********************************************************************************
-
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #include "vl53l1_ll_def.h"
 #include "vl53l1_platform.h"
 #include "vl53l1_register_map.h"
 #include "vl53l1_core.h"
 #include "vl53l1_silicon_core.h"
-
 
 #define LOG_FUNCTION_START(fmt, ...) \
 	_LOG_FUNCTION_START(VL53L1_TRACE_MODULE_CORE, fmt, ##__VA_ARGS__)
@@ -113,28 +74,16 @@
 	_LOG_FUNCTION_END_FMT(VL53L1_TRACE_MODULE_CORE,\
 			status, fmt, ##__VA_ARGS__)
 
-
 VL53L1_Error VL53L1_is_firmware_ready_silicon(
 	VL53L1_DEV     Dev,
 	uint8_t       *pready)
 {
-
-
-
-
-
-
-
-
 	VL53L1_Error status = VL53L1_ERROR_NONE;
 	VL53L1_LLDriverData_t *pdev = VL53L1DevStructGetLLDriverHandle(Dev);
 
 	uint8_t  comms_buffer[5];
 
 	LOG_FUNCTION_START("");
-
-
-
 
 	status = VL53L1_ReadMulti(
 				Dev,
@@ -158,7 +107,6 @@ VL53L1_Error VL53L1_is_firmware_ready_silicon(
 
 	if ((pdev->sys_ctrl.power_management__go1_power_force & 0x01)
 			== 0x01) {
-
 		if (((pdev->dbg_results.interrupt_manager__enables &
 				0x1F) == 0x1F) &&
 			((pdev->dbg_results.interrupt_manager__clear
@@ -166,11 +114,7 @@ VL53L1_Error VL53L1_is_firmware_ready_silicon(
 			*pready = 0x01;
 		else
 			*pready = 0x00;
-
 	} else {
-
-
-
 		if ((pdev->dbg_results.power_management__go1_reset_status
 				& 0x01) == 0x00)
 			*pready = 0x01;
@@ -178,10 +122,8 @@ VL53L1_Error VL53L1_is_firmware_ready_silicon(
 			*pready = 0x00;
 	}
 
-
 ENDFUNC:
 	LOG_FUNCTION_END(status);
 
 	return status;
 }
-

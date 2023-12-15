@@ -57,44 +57,8 @@
  OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 ********************************************************************************
-
 */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #include "vl53l1_ll_def.h"
 #include "vl53l1_platform.h"
@@ -122,11 +86,6 @@ void VL53L1_print_nvm_raw_data(
 	uint8_t                       *pnvm_raw_data,
 	uint32_t                       trace_flags)
 {
-
-
-
-
-
 	int i = 0;
 
 	LOG_FUNCTION_START("");
@@ -150,7 +109,6 @@ void VL53L1_print_nvm_raw_data(
 
 	LOG_FUNCTION_END(0);
 }
-
 
 void VL53L1_print_decoded_nvm_data(
 	VL53L1_decoded_nvm_data_t *pdata,
@@ -434,9 +392,6 @@ void VL53L1_print_decoded_nvm_data(
 		"nvm__laser_safety_unlock_byte",
 		pdata->nvm__laser_safety_unlock_byte);
 
-
-
-
 	for (i = 0 ; i < VL53L1_RTN_SPAD_BUFFER_SIZE ; i++) {
 		sprintf(
 			ppre_text,
@@ -488,10 +443,6 @@ void VL53L1_print_decoded_nvm_data(
 			ppre_text,
 			pdata->nvm__ews__spad_enables_ref__loc3[i]);
 	}
-
-
-
-
 
 	for (i = 0 ; i < VL53L1_RTN_SPAD_BUFFER_SIZE ; i++) {
 		sprintf(
@@ -774,9 +725,6 @@ void VL53L1_print_decoded_nvm_data(
 		"nvm__cust__spare__host_config__nvm_config_spare_1",
 		pdata->nvm__cust__spare__host_config__nvm_config_spare_1);
 
-
-
-
 	sprintf(
 		ppre_text,
 		"%sfmt_optical_centre.", pprefix);
@@ -785,9 +733,6 @@ void VL53L1_print_decoded_nvm_data(
 		&(pdata->fmt_optical_centre),
 		ppre_text,
 		VL53L1_TRACE_MODULE_NVM_DATA);
-
-
-
 
 	sprintf(
 		ppre_text,
@@ -798,9 +743,6 @@ void VL53L1_print_decoded_nvm_data(
 		ppre_text,
 		VL53L1_TRACE_MODULE_NVM_DATA);
 
-
-
-
 	sprintf(
 		ppre_text,
 		"%sfmt_add_offset_data.",
@@ -810,9 +752,6 @@ void VL53L1_print_decoded_nvm_data(
 		&(pdata->fmt_add_offset_data),
 		ppre_text,
 		VL53L1_TRACE_MODULE_NVM_DATA);
-
-
-
 
 	for (i = 0 ; i < VL53L1_NVM_MAX_FMT_RANGE_DATA ; i++) {
 		sprintf(
@@ -846,7 +785,6 @@ void VL53L1_print_decoded_nvm_data(
 		ppre_text,
 		trace_flags);
 }
-
 
 void VL53L1_print_decoded_nvm_fmt_range_data(
 	VL53L1_decoded_nvm_fmt_range_data_t *pdata,
@@ -960,7 +898,6 @@ void VL53L1_print_decoded_nvm_fmt_range_data(
 		"measured_distance_stdev_mm",
 		fp_text);
 }
-
 
 void VL53L1_print_decoded_nvm_fmt_info(
 	VL53L1_decoded_nvm_fmt_info_t *pdata,
@@ -1086,7 +1023,6 @@ void VL53L1_print_decoded_nvm_fmt_info(
 		pdata->nvm__ews__tester_id);
 }
 
-
 void VL53L1_print_decoded_nvm_ews_info(
 	VL53L1_decoded_nvm_ews_info_t *pdata,
 	char                          *pprefix,
@@ -1119,8 +1055,4 @@ void VL53L1_print_decoded_nvm_ews_info(
 		"nvm__ews__ycoord",
 		pdata->nvm__ews__ycoord);
 }
-
 #endif
-
-
-
