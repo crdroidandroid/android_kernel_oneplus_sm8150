@@ -18,14 +18,11 @@
 #include "msm_drv.h"
 #include "msm_mmu.h"
 
-#ifdef OPLUS_BUG_STABILITY
-static int msm_smmu_count = 0;
-#endif /* OPLUS_BUG_STABILITY */
-
 struct msm_iommu {
 	struct msm_mmu base;
 	struct iommu_domain *domain;
 };
+
 #define to_msm_iommu(x) container_of(x, struct msm_iommu, base)
 
 static int msm_fault_handler(struct iommu_domain *domain, struct device *dev,

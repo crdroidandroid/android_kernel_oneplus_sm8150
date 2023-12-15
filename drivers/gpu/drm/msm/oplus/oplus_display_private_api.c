@@ -2247,9 +2247,12 @@ static ssize_t oplus_display_notify_fp_press(struct device *dev,
 			if (mode->flags & DRM_MODE_FLAG_CMD_MODE_PANEL)
 				cmd_mode = mode;
 		}
-		if (!display->panel->oplus_priv.prj_flag)
+
+		if (!display->panel->oplus_priv.prj_flag) {
 			set_mode = oplus_display_mode ? vid_mode : cmd_mode;
 			set_mode = onscreenfp_status ? vid_mode : set_mode;
+		}
+
 		if (!crtc_state->active || !crtc_state->enable)
 			goto error;
 

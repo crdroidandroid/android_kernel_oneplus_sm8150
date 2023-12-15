@@ -2397,9 +2397,7 @@ static int sde_kms_atomic_check(struct msm_kms *kms,
 {
 	struct sde_kms *sde_kms;
 	struct drm_device *dev;
-	struct drm_crtc *crtc;
-	struct drm_crtc_state *old_crtc_state, *new_crtc_state;
-	int ret, i;
+	int ret;
 
 	if (!kms || !state)
 		return -EINVAL;
