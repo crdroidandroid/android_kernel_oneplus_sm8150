@@ -35,11 +35,9 @@
 #include <linux/spinlock.h>
 #include <linux/gpio.h>
 #include <linux/errno.h>
-#include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/slab.h>
 #include <linux/sched.h>
-#include <linux/kthread.h>
 #include <linux/of.h>
 
 #include <linux/bitops.h>
