@@ -4990,6 +4990,7 @@ int dsi_panel_post_switch(struct dsi_panel *panel)
 int dsi_panel_enable(struct dsi_panel *panel)
 {
 	int rc = 0;
+	int hbm_mode = oplus_display_get_hbm_mode();
 
 	if (!panel) {
 		pr_err("Invalid params\n");
@@ -5005,6 +5006,13 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	else
 		panel->panel_initialized = true;
 
+	if (hbm_mode) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_HBM_OFF);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_HBM_OFF cmds, rc=%d\n",
+				panel->name, rc);
+	}
+
 //#ifdef OPLUS_BUG_STABILITY
 	panel->need_power_on_backlight = true;
         if ((strcmp(panel->name, "samsung dsc cmd mode oneplus dsi panel") == 0) && (gamma_read_flag == GAMMA_READ_SUCCESS)) {
@@ -5018,6 +5026,14 @@ int dsi_panel_enable(struct dsi_panel *panel)
 	}
 	set_oplus_display_power_status(OPLUS_DISPLAY_POWER_ON);
 //#endif /* OPLUS_BUG_STABILITY */
+
+	if (hbm_mode) {
+		rc = dsi_panel_tx_cmd_set(panel, DSI_CMD_HBM_ON);
+		if (rc)
+			pr_err("[%s] failed to send DSI_CMD_HBM_ON cmds, rc=%d\n",
+				panel->name, rc);
+	}
+
 	mutex_unlock(&panel->panel_lock);
 	return rc;
 }
