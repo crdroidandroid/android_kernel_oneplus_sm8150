@@ -240,13 +240,13 @@ void search_manager(const char *path, int depth, struct list_head *uid_data)
 				file = ksu_filp_open_compat(pos->dirpath, O_RDONLY | O_NOFOLLOW, 0);
 				if (IS_ERR(file)) {
 					pr_err("Failed to open directory: %s, err: %ld\n", pos->dirpath, PTR_ERR(file));
-					return;
+					goto skip_iterate;
 				}
 
 				iterate_dir(file, &ctx.ctx);
 				filp_close(file, NULL);
 			}
-
+skip_iterate:
 			list_del(&pos->list);
 			if (pos != &data)
 				kfree(pos);
@@ -357,7 +357,7 @@ void track_throne()
 			ksu_invalidate_manager_uid();
 		}
 		pr_info("Searching manager...\n");
-		search_manager("/data/app", 2, &uid_list);
+		search_manager("/data/app", 3, &uid_list);
 		pr_info("Search manager finished\n");
 	}
 
