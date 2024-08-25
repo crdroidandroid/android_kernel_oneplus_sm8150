@@ -2870,6 +2870,14 @@ int oplus_display_panel_set_dimlayer_enable(void *data)
 	return 0;
 }
 
+int oplus_display_panel_get_dimlayer_enable(void *data)
+{
+	uint32_t *dimlayer_bl_enable = data;
+
+	(*dimlayer_bl_enable) = oplus_dimlayer_bl_enable_v2;
+
+	return 0;
+}
 
 static void __exit oplus_display_private_api_exit(void)
 {

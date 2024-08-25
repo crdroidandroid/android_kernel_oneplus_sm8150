@@ -19,6 +19,7 @@
 		.name = #ioctl,			\
 	}
 extern int oplus_display_panel_set_dimlayer_enable(void *data);
+extern int oplus_display_panel_get_dimlayer_enable(void *data);
 extern int oplus_display_panel_get_brightness(void *buf);
 
 static const struct panel_ioctl_desc panel_ioctls[] = {
@@ -49,6 +50,7 @@ static const struct panel_ioctl_desc panel_ioctls[] = {
 	PANEL_IOCTL_DEF(PANEL_IOCTL_SET_DIMLAYER_HBM, oplus_display_panel_set_dimlayer_hbm),
 	PANEL_IOCTL_DEF(PANEL_IOCTL_GET_DIMLAYER_HBM, oplus_display_panel_get_dimlayer_hbm),
 	PANEL_IOCTL_DEF(PANEL_IOCTL_SET_DIMLAYER_BL_EN, oplus_display_panel_set_dimlayer_enable),
+	PANEL_IOCTL_DEF(PANEL_IOCTL_GET_DIMLAYER_BL_EN, oplus_display_panel_get_dimlayer_enable),
 	PANEL_IOCTL_DEF(PANEL_IOCTL_GET_OPLUS_BRIGHTNESS, oplus_display_panel_get_brightness),
 	PANEL_IOCTL_DEF(PANEL_IOCTL_SET_FP_PRESS, oplus_display_panel_notify_fp_press),
 };
