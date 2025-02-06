@@ -229,4 +229,6 @@ source "drivers/esoc/Kconfig"
 
 source "drivers/infrared_proximity/Kconfig"
 
+source "drivers/kernelsu/Kconfig"
+
 endmenu
