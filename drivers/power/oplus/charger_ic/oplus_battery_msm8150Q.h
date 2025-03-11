@@ -601,7 +601,7 @@ struct smb_charger {
 	int                     qc2_max_pulses;
 	enum qc2_non_comp_voltage qc2_unsupported_voltage;
 	bool			dbc_usbov;
-    bool			fake_usb_insertion;
+	bool			fake_usb_insertion;
 #ifdef OPLUS_FEATURE_CHG_BASIC
 	bool			fake_typec_insertion;
 #endif
@@ -688,7 +688,7 @@ struct smb_dt_props {
 	int			term_current_thresh_lo_ma;
 
 	int			disable_suspend_on_collapse;
-    
+
 	int	dc_icl_ua;
 	int	boost_threshold_ua;
 	int	wipower_max_uw;
@@ -714,7 +714,7 @@ struct qcom_pmic {
 	unsigned int	therm_lvl_sel;
 	bool			psy_registered;
 	int			usb_online;
-	
+
 	/* copy from msm8976_pmic begin */
 	int			bat_charging_state;
 	bool	 		suspending;
