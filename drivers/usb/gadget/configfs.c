@@ -322,7 +322,7 @@ static ssize_t gadget_dev_desc_UDC_store(struct config_item *item,
 	name = kstrdup(page, GFP_KERNEL);
 	if (!name)
 		return -ENOMEM;
-	if (name[len - 1] == '\n')
+	if (len && name[len - 1] == '\n')
 		name[len - 1] = '\0';
 
 	mutex_lock(&gi->lock);
@@ -871,7 +871,7 @@ static ssize_t os_desc_qw_sign_store(struct config_item *item, const char *page,
 	int res, l;
 
 	l = min((int)len, OS_STRING_QW_SIGN_LEN >> 1);
-	if (page[l - 1] == '\n')
+	if (l && page[l - 1] == '\n')
 		--l;
 
 	mutex_lock(&gi->lock);
@@ -1038,7 +1038,7 @@ static ssize_t ext_prop_data_store(struct config_item *item,
 	char *new_data;
 	size_t ret_len = len;
 
-	if (page[len - 1] == '\n' || page[len - 1] == '\0')
+	if (len && (page[len - 1] == '\n' || page[len - 1] == '\0'))
 		--len;
 	new_data = kmemdup(page, len, GFP_KERNEL);
 	if (!new_data)
@@ -1164,7 +1164,7 @@ static ssize_t interf_grp_compatible_id_store(struct config_item *item,
 	int l;
 
 	l = min_t(int, 8, len);
-	if (page[l - 1] == '\n')
+	if (l && page[l - 1] == '\n')
 		--l;
 	if (desc->opts_mutex)
 		mutex_lock(desc->opts_mutex);
@@ -1190,7 +1190,7 @@ static ssize_t interf_grp_sub_compatible_id_store(struct config_item *item,
 	int l;
 
 	l = min_t(int, 8, len);
-	if (page[l - 1] == '\n')
+	if (l && page[l - 1] == '\n')
 		--l;
 	if (desc->opts_mutex)
 		mutex_lock(desc->opts_mutex);
