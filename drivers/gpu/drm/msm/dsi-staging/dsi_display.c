@@ -7953,7 +7953,7 @@ int dsi_display_get_gamma_para(struct dsi_display *dsi_display, struct dsi_panel
 	int flags = 0;
 	char fb[13] = {0};
 	char b3[47] = {0};
-	char fb_temp[13] = {0};
+	char fb_temp[17] = {0};
 	char c8_temp[135] = {0};
 	char c9_temp[180] = {0};
 	char b3_temp[47] = {0};
