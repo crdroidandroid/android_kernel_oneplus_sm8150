@@ -1735,11 +1735,15 @@ ffs_fs_mount(struct file_system_type *t, int flags,
 static void
 ffs_fs_kill_sb(struct super_block *sb)
 {
+	struct ffs_data *ffs = sb->s_fs_info;
+
 	ENTER();
 
 	kill_litter_super(sb);
-	if (sb->s_fs_info)
-		ffs_data_closed(sb->s_fs_info);
+	if (ffs) {
+		cancel_work_sync(&ffs->reset_work);
+		ffs_data_closed(ffs);
+	}
 }
 
 static struct file_system_type ffs_fs_type = {
