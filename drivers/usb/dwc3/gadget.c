@@ -284,19 +284,21 @@ int dwc3_gadget_resize_tx_fifos(struct dwc3 *dwc, struct dwc3_ep *dep)
 	return 0;
 }
 
-void dwc3_gadget_del_and_unmap_request(struct dwc3_ep *dep,
+static bool dwc3_gadget_del_and_unmap_request(struct dwc3_ep *dep,
 		struct dwc3_request *req, int status)
 {
 	struct dwc3			*dwc = dep->dwc;
 
+	/* Another remove/giveback path may have completed this request already. */
+	if (req->request.status != -EINPROGRESS)
+		return false;
+
+	req->request.status = status;
 	req->started = false;
 	list_del(&req->list);
 	req->remaining = 0;
 	req->unaligned = false;
 	req->zero = false;
-
-	if (req->request.status == -EINPROGRESS)
-		req->request.status = status;
 
 	if (req->trb) {
 		dbg_ep_unmap(dep->number, req);
@@ -306,6 +308,7 @@ void dwc3_gadget_del_and_unmap_request(struct dwc3_ep *dep,
 
 	req->trb = NULL;
 	trace_dwc3_gadget_giveback(req);
+	return true;
 }
 
 /**
@@ -323,7 +326,8 @@ void dwc3_gadget_giveback(struct dwc3_ep *dep, struct dwc3_request *req,
 {
 	struct dwc3			*dwc = dep->dwc;
 
-	dwc3_gadget_del_and_unmap_request(dep, req, status);
+	if (!dwc3_gadget_del_and_unmap_request(dep, req, status))
+		return;
 
 	if (usb_endpoint_xfer_isoc(dep->endpoint.desc)) {
 		if (list_empty(&dep->started_list)) {
