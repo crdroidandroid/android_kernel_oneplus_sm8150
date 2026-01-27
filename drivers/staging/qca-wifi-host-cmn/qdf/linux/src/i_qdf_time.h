@@ -306,23 +306,9 @@ static inline uint64_t __qdf_get_log_timestamp(void)
  * The time since system booted in nanoseconds
  */
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 3, 0))
-static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
-{
-	return ktime_get_boottime_ns();
-}
-
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
-static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
-{
-	return ktime_get_boottime_ns();
-}
-
-#else
 static inline uint64_t __qdf_get_bootbased_boottime_ns(void)
 {
 	return ktime_to_ns(ktime_get_boottime());
 }
-#endif
 
 #endif
