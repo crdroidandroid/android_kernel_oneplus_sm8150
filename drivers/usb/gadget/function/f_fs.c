@@ -62,8 +62,8 @@ static struct ffs_data *__must_check ffs_data_new(const char *dev_name)
 	__attribute__((malloc));
 
 /* Opened counter handling. */
-static void ffs_data_opened(struct ffs_data *ffs);
 static void ffs_data_closed(struct ffs_data *ffs);
+static void ffs_data_reset(struct ffs_data *ffs);
 
 /* Called with ffs->mutex held; take over ownership of data. */
 static int __must_check
@@ -644,17 +644,31 @@ done_mutex:
 static int ffs_ep0_open(struct inode *inode, struct file *file)
 {
 	struct ffs_data *ffs = inode->i_private;
+	unsigned long flags;
+	bool needs_reset = false;
 
 	ENTER();
 
 	ffs_log("state %d setup_state %d flags %lu opened %d", ffs->state,
-		ffs->setup_state, ffs->flags, atomic_read(&ffs->opened));
+		ffs->setup_state, ffs->flags, ffs->opened);
 
-	if (unlikely(ffs->state == FFS_CLOSING))
+	spin_lock_irqsave(&ffs->eps_lock, flags);
+	if (unlikely(ffs->state == FFS_CLOSING)) {
+		spin_unlock_irqrestore(&ffs->eps_lock, flags);
 		return -EBUSY;
+	}
+
+	refcount_inc(&ffs->ref);
+	if (!ffs->opened++ && ffs->state == FFS_DEACTIVATED) {
+		ffs->state = FFS_CLOSING;
+		needs_reset = true;
+	}
+	spin_unlock_irqrestore(&ffs->eps_lock, flags);
+
+	if (needs_reset)
+		ffs_data_reset(ffs);
 
 	file->private_data = ffs;
-	ffs_data_opened(ffs);
 
 	return stream_open(inode, file);
 }
@@ -666,7 +680,7 @@ static int ffs_ep0_release(struct inode *inode, struct file *file)
 	ENTER();
 
 	ffs_log("state %d setup_state %d flags %lu opened %d", ffs->state,
-		ffs->setup_state, ffs->flags, atomic_read(&ffs->opened));
+		ffs->setup_state, ffs->flags, ffs->opened);
 
 	ffs_data_closed(ffs);
 
@@ -682,7 +696,7 @@ static long ffs_ep0_ioctl(struct file *file, unsigned code, unsigned long value)
 	ENTER();
 
 	ffs_log("state %d setup_state %d flags %lu opened %d", ffs->state,
-		ffs->setup_state, ffs->flags, atomic_read(&ffs->opened));
+		ffs->setup_state, ffs->flags, ffs->opened);
 
 	if (code == FUNCTIONFS_INTERFACE_REVMAP) {
 		struct ffs_function *func = ffs->func;
@@ -703,7 +717,7 @@ static unsigned int ffs_ep0_poll(struct file *file, poll_table *wait)
 	int ret;
 
 	ffs_log("enter:state %d setup_state %d flags %lu opened %d", ffs->state,
-		ffs->setup_state, ffs->flags, atomic_read(&ffs->opened));
+		ffs->setup_state, ffs->flags, ffs->opened);
 
 	poll_wait(file, &ffs->ev.waitq, wait);
 
@@ -1179,6 +1193,7 @@ ffs_epfile_open(struct inode *inode, struct file *file)
 {
 	struct ffs_epfile *epfile = inode->i_private;
 	struct ffs_data *ffs = epfile->ffs;
+	unsigned long flags;
 
 	ENTER();
 
@@ -1186,11 +1201,17 @@ ffs_epfile_open(struct inode *inode, struct file *file)
 		epfile->name, epfile->ffs->state, epfile->ffs->setup_state,
 		epfile->ffs->flags, atomic_read(&epfile->opened));
 
-	if (WARN_ON(epfile->ffs->state != FFS_ACTIVE))
+	spin_lock_irqsave(&ffs->eps_lock, flags);
+	if (!ffs->opened || WARN_ON(epfile->ffs->state != FFS_ACTIVE)) {
+		spin_unlock_irqrestore(&ffs->eps_lock, flags);
 		return -ENODEV;
+	}
+
+	refcount_inc(&ffs->ref);
+	ffs->opened++;
+	spin_unlock_irqrestore(&ffs->eps_lock, flags);
 
 	file->private_data = epfile;
-	ffs_data_opened(epfile->ffs);
 	atomic_inc(&epfile->opened);
 
 	return stream_open(inode, file);
@@ -1759,7 +1780,6 @@ static void functionfs_cleanup(void)
 /* ffs_data and ffs_function construction and destruction code **************/
 
 static void ffs_data_clear(struct ffs_data *ffs);
-static void ffs_data_reset(struct ffs_data *ffs);
 
 static void ffs_data_get(struct ffs_data *ffs)
 {
@@ -1768,22 +1788,6 @@ static void ffs_data_get(struct ffs_data *ffs)
 	ffs_log("ref %u", refcount_read(&ffs->ref));
 
 	refcount_inc(&ffs->ref);
-}
-
-static void ffs_data_opened(struct ffs_data *ffs)
-{
-	ENTER();
-
-	ffs_log("enter: state %d setup_state %d flag %lu opened %d ref %d",
-		ffs->state, ffs->setup_state, ffs->flags,
-		atomic_read(&ffs->opened), refcount_read(&ffs->ref));
-
-	refcount_inc(&ffs->ref);
-	if (atomic_add_return(1, &ffs->opened) == 1 &&
-			ffs->state == FFS_DEACTIVATED) {
-		ffs->state = FFS_CLOSING;
-		ffs_data_reset(ffs);
-	}
 }
 
 static void ffs_data_put(struct ffs_data *ffs)
@@ -1814,30 +1818,29 @@ static void ffs_data_closed(struct ffs_data *ffs)
 	ENTER();
 
 	ffs_log("state %d setup_state %d flag %lu opened %d", ffs->state,
-		ffs->setup_state, ffs->flags, atomic_read(&ffs->opened));
+		ffs->setup_state, ffs->flags, ffs->opened);
 
-	if (atomic_dec_and_test(&ffs->opened)) {
-		if (ffs->no_disconnect) {
-			ffs->state = FFS_DEACTIVATED;
-			spin_lock_irqsave(&ffs->eps_lock, flags);
-			epfiles = ffs->epfiles;
-			ffs->epfiles = NULL;
-			spin_unlock_irqrestore(&ffs->eps_lock,
-							flags);
-
-			if (epfiles)
-				ffs_epfiles_destroy(epfiles,
-						 ffs->eps_count);
-
-			if (ffs->setup_state == FFS_SETUP_PENDING)
-				__ffs_ep0_stall(ffs);
-		} else {
-			ffs->state = FFS_CLOSING;
-			ffs_data_reset(ffs);
-		}
+	spin_lock_irqsave(&ffs->eps_lock, flags);
+	if (--ffs->opened) {
+		spin_unlock_irqrestore(&ffs->eps_lock, flags);
+		ffs_data_put(ffs);
+		return;
 	}
-	if (atomic_read(&ffs->opened) < 0) {
+
+	if (ffs->no_disconnect) {
+		ffs->state = FFS_DEACTIVATED;
+		epfiles = ffs->epfiles;
+		ffs->epfiles = NULL;
+		spin_unlock_irqrestore(&ffs->eps_lock, flags);
+
+		if (epfiles)
+			ffs_epfiles_destroy(epfiles, ffs->eps_count);
+
+		if (ffs->setup_state == FFS_SETUP_PENDING)
+			__ffs_ep0_stall(ffs);
+	} else {
 		ffs->state = FFS_CLOSING;
+		spin_unlock_irqrestore(&ffs->eps_lock, flags);
 		ffs_data_reset(ffs);
 	}
 
@@ -1868,7 +1871,7 @@ static struct ffs_data *ffs_data_new(const char *dev_name)
 	}
 
 	refcount_set(&ffs->ref, 1);
-	atomic_set(&ffs->opened, 0);
+	ffs->opened = 0;
 	ffs->state = FFS_READ_DESCRIPTORS;
 	mutex_init(&ffs->mutex);
 	spin_lock_init(&ffs->eps_lock);
@@ -1930,6 +1933,8 @@ static void ffs_data_clear(struct ffs_data *ffs)
 
 static void ffs_data_reset(struct ffs_data *ffs)
 {
+	unsigned long flags;
+
 	ENTER();
 
 	ffs_log("enter: state %d setup_state %d flag %lu", ffs->state,
@@ -1937,6 +1942,7 @@ static void ffs_data_reset(struct ffs_data *ffs)
 
 	ffs_data_clear(ffs);
 
+	spin_lock_irqsave(&ffs->eps_lock, flags);
 	ffs->raw_descs_data = NULL;
 	ffs->raw_descs = NULL;
 	ffs->raw_strings = NULL;
@@ -1960,6 +1966,7 @@ static void ffs_data_reset(struct ffs_data *ffs)
 	ffs->ms_os_descs_ext_prop_count = 0;
 	ffs->ms_os_descs_ext_prop_name_len = 0;
 	ffs->ms_os_descs_ext_prop_data_len = 0;
+	spin_unlock_irqrestore(&ffs->eps_lock, flags);
 }
 
 
@@ -3494,6 +3501,7 @@ static int ffs_func_set_alt(struct usb_function *f,
 {
 	struct ffs_function *func = ffs_func_from_usb(f);
 	struct ffs_data *ffs = func->ffs;
+	unsigned long flags;
 	int ret = 0, intf;
 
 	ffs_log("enter: alt %d", (int)alt);
@@ -3511,12 +3519,15 @@ static int ffs_func_set_alt(struct usb_function *f,
 		usb_gadget_autopm_put_async(ffs->gadget);
 	}
 
+	spin_lock_irqsave(&ffs->eps_lock, flags);
 	if (ffs->state == FFS_DEACTIVATED) {
 		ffs->state = FFS_CLOSING;
+		spin_unlock_irqrestore(&ffs->eps_lock, flags);
 		INIT_WORK(&ffs->reset_work, ffs_reset_work);
 		schedule_work(&ffs->reset_work);
 		return -ENODEV;
 	}
+	spin_unlock_irqrestore(&ffs->eps_lock, flags);
 
 	if (ffs->state != FFS_ACTIVE)
 		return -ENODEV;
