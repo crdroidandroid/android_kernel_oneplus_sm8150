@@ -256,6 +256,32 @@ int ksu_handle_devpts(struct inode *inode)
 	if (!ksu_is_allow_uid(uid))
 		return 0;
 
+	// This is a hotfix to stop Termux from crashing the entire phone.
+	//
+	// Old KernelSU versions adjusted `/dev/pts` SELinux contexts to allow
+	// `pm list users` to work directly. Users who need that command should now use
+	// `script /dev/null -c 'pm list users'` as root as a workaround. `script` comes with Termux.
+	// `adb shell pm list users` still works by default.
+	// The proper long-term solution is to update KernelSU,
+	// or at least cherry-pick https://github.com/tiann/KernelSU/pull/2886 .
+	//
+	// __list_del_entry_valid+0x48/0xd0
+	// selinux_inode_free_security+0x9c/0x100
+	// security_inode_free+0x2c/0x60
+	// __destroy_inode+0xbc/0x220
+	// evict+0x308/0x400
+	// iput+0x300/0x400
+	// dentry_unlink_inode+0x14c/0x160
+	// d_delete+0x208/0x250
+	// devpts_pty_kill+0x38/0x60
+	// pty_close+0x18c/0x1d0
+	// tty_release+0x1a0/0x650
+	// __fput+0x68/0x1d0
+	// ____fput+0xc/0x20
+	// task_work_run+0xfc/0x130
+	// do_notify_resume+0x18dc/0x19e0
+	// work_pending+0x8/0x10
+#if 0
 	if (ksu_devpts_sid) {
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(5, 1, 0)
 		struct inode_security_struct *sec = selinux_inode(inode);
@@ -267,6 +293,7 @@ int ksu_handle_devpts(struct inode *inode)
 			sec->sid = ksu_devpts_sid;
 		}
 	}
+#endif
 
 	return 0;
 }
