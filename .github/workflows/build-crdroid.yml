@@ -1,0 +1,42 @@
+name: Build crDroid Kernel
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+          ref: 16.0
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y git device-tree-compiler xz-utils zlib1g-dev \
+            gcc-aarch64-linux-gnu gcc-arm-linux-gnueabihf flex bison \
+            libssl-dev bc python3
+
+      - name: Remove -Werror
+        run: |
+          sed -i 's/-Werror//g' Makefile
+
+      - name: Set up kernel config
+        run: |
+          mkdir -p out
+          make ARCH=arm64 O=out vendor/oplus.config
+
+      - name: Build kernel
+        run: |
+          make -j$(nproc) ARCH=arm64 O=out \
+            CROSS_COMPILE=aarch64-linux-gnu-
+
+      - name: Upload kernel image
+        uses: actions/upload-artifact@v4
+        with:
+          name: crdroid-kernel
+          path: out/arch/arm64/boot/Image.gz-dtb
