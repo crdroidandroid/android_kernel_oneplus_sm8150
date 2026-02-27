@@ -60,8 +60,13 @@ static struct uac_clock_selector_descriptor *
 					     ctrl_iface->extralen,
 					     cs, UAC2_CLOCK_SELECTOR))) {
 		if (cs->bLength >= sizeof(*cs) && cs->bClockID == clock_id) {
-			if (cs->bLength < 5 + cs->bNrInPins)
-				return NULL;
+			/* Validate total length covers variable-length
+			 * baCSourceID[bNrInPins] array plus trailing
+			 * bmControls (1) and iClockSelector (1) fields.
+			 */
+			if (!cs->bNrInPins ||
+			    cs->bLength < 7 + cs->bNrInPins)
+				continue;
 			return cs;
 		}
 	}
@@ -382,6 +387,12 @@ static int set_sample_rate_v2(struct snd_usb_audio *chip, int iface,
 		return 0;
 
 	cs_desc = snd_usb_find_clock_source(chip->ctrl_intf, clock);
+	if (!cs_desc) {
+		usb_audio_err(chip,
+			"%d:%d: clock source descriptor not found for id %d\n",
+			iface, fmt->altsetting, clock);
+		return -ENODEV;
+	}
 	writeable = uac2_control_is_writeable(cs_desc->bmControls, UAC2_CS_CONTROL_SAM_FREQ - 1);
 	if (writeable) {
 		data = cpu_to_le32(rate);
