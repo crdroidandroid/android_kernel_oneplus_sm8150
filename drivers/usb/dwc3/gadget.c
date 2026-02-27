@@ -3130,6 +3130,14 @@ static void dwc3_endpoint_interrupt(struct dwc3 *dwc,
 		break;
 	case DWC3_DEPEVT_XFERNOTREADY:
 		dep->dbg_ep_events.xfernotready++;
+		/*
+		 * During a device-initiated disconnect, a late xferNotReady
+		 * event can be generated after the End Transfer command resets
+		 * the event filter, but before the controller is halted.
+		 * Ignore it to prevent a new transfer from starting.
+		 */
+		if (!dwc->connected)
+			break;
 		if (usb_endpoint_xfer_isoc(dep->endpoint.desc)) {
 			dwc3_gadget_start_isoc(dwc, dep, event);
 		} else {
