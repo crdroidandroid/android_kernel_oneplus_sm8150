@@ -1142,7 +1142,8 @@ static struct sk_buff *ncm_wrap_ntb(struct gether *port,
 	return skb2;
 
 err:
-	ncm->netdev->stats.tx_dropped++;
+	if (ncm->netdev)
+		ncm->netdev->stats.tx_dropped++;
 
 	if (skb)
 		dev_kfree_skb_any(skb);
