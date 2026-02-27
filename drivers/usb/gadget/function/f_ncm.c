@@ -78,8 +78,6 @@ struct f_ncm {
 	u16				ndp_dgram_count;
 	struct tasklet_struct		tx_tasklet;
 	struct hrtimer			task_timer;
-
-	bool				timer_stopping;
 };
 
 static inline struct f_ncm *func_to_ncm(struct usb_function *f)
@@ -897,8 +895,7 @@ static int ncm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 
 		if (ncm->port.in_ep->enabled) {
 			DBG(cdev, "reset ncm\n");
-			ncm->timer_stopping = true;
-			ncm->netdev = NULL;
+			WRITE_ONCE(ncm->netdev, NULL);
 			gether_disconnect(&ncm->port);
 			ncm_reset_values(ncm);
 		}
@@ -935,7 +932,6 @@ static int ncm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 			if (IS_ERR(net))
 				return PTR_ERR(net);
 			ncm->netdev = net;
-			ncm->timer_stopping = false;
 		}
 
 		spin_lock(&ncm->lock);
@@ -1164,19 +1160,19 @@ err:
 static void ncm_tx_tasklet(unsigned long data)
 {
 	struct f_ncm	*ncm = (void *)data;
-
-	if (ncm->timer_stopping)
-		return;
+	struct net_device *netdev = READ_ONCE(ncm->netdev);
 
 	/* Only send if data is available. */
-	if (ncm->skb_tx_data) {
+	if (netdev && ncm->skb_tx_data) {
 		/* XXX This allowance of a NULL skb argument to ndo_start_xmit
 		 * XXX is not sane.  The gadget layer should be redesigned so
 		 * XXX that the dev->wrap() invocations to build SKBs is transparent
 		 * XXX and performed in some way outside of the ndo_start_xmit
 		 * XXX interface.
+		 *
+		 * This will call directly into u_ether's eth_start_xmit()
 		 */
-		ncm->netdev->netdev_ops->ndo_start_xmit(NULL, ncm->netdev);
+		netdev->netdev_ops->ndo_start_xmit(NULL, netdev);
 	}
 }
 
@@ -1394,9 +1390,10 @@ static void ncm_disable(struct usb_function *f)
 
 	DBG(cdev, "ncm deactivated\n");
 
+	hrtimer_cancel(&ncm->task_timer);
+
 	if (ncm->port.in_ep->enabled) {
-		ncm->timer_stopping = true;
-		ncm->netdev = NULL;
+		WRITE_ONCE(ncm->netdev, NULL);
 		gether_disconnect(&ncm->port);
 	}
 
