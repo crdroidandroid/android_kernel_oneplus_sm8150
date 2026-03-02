@@ -993,6 +993,15 @@ static netdev_tx_t eth_start_xmit(struct sk_buff *skb,
 		} else {
 			req->no_interrupt = 1;
 		}
+		/*
+		 * If this is the last request in the pool, force an
+		 * interrupt to prevent TX queue starvation.  Otherwise
+		 * all remaining in-flight TRBs may have IOC=0 and the
+		 * DWC3 controller will never generate a completion
+		 * event, permanently stalling the TX path.
+		 */
+		if (list_empty(&dev->tx_reqs))
+			req->no_interrupt = 0;
 		spin_unlock_irqrestore(&dev->req_lock, flags);
 	} else {
 		req->no_interrupt = 0;
