@@ -1163,8 +1163,7 @@ static void ncm_tx_tasklet(unsigned long data)
 	struct f_ncm	*ncm = (void *)data;
 	struct net_device *netdev = READ_ONCE(ncm->netdev);
 
-	/* Only send if data is available. */
-	if (netdev && ncm->skb_tx_data) {
+	if (netdev) {
 		/* XXX This allowance of a NULL skb argument to ndo_start_xmit
 		 * XXX is not sane.  The gadget layer should be redesigned so
 		 * XXX that the dev->wrap() invocations to build SKBs is transparent
