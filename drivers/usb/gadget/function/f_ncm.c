@@ -85,6 +85,11 @@ static inline struct f_ncm *func_to_ncm(struct usb_function *f)
 	return container_of(f, struct f_ncm, port.func);
 }
 
+static inline struct f_ncm_opts *func_to_ncm_opts(struct usb_function *f)
+{
+	return container_of(f->fi, struct f_ncm_opts, func_inst);
+}
+
 /* peak (theoretical) bulk transfer rate in bits-per-second */
 static inline unsigned ncm_bitrate(struct usb_gadget *g)
 {
@@ -871,6 +876,7 @@ invalid:
 static int ncm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 {
 	struct f_ncm		*ncm = func_to_ncm(f);
+	struct f_ncm_opts	*ncm_opts = func_to_ncm_opts(f);
 	struct usb_composite_dev *cdev = f->config->cdev;
 
 	/* Control interface has only altsetting 0 */
@@ -893,12 +899,14 @@ static int ncm_set_alt(struct usb_function *f, unsigned intf, unsigned alt)
 		if (alt > 1)
 			goto fail;
 
+		mutex_lock(&ncm_opts->lock);
 		if (ncm->netdev) {
 			DBG(cdev, "reset ncm\n");
 			WRITE_ONCE(ncm->netdev, NULL);
 			gether_disconnect(&ncm->port);
 			ncm_reset_values(ncm);
 		}
+		mutex_unlock(&ncm_opts->lock);
 
 		/*
 		 * CDC Network only sends data in non-default altsettings.
@@ -1384,16 +1392,19 @@ err:
 static void ncm_disable(struct usb_function *f)
 {
 	struct f_ncm		*ncm = func_to_ncm(f);
+	struct f_ncm_opts	*ncm_opts = func_to_ncm_opts(f);
 	struct usb_composite_dev *cdev = f->config->cdev;
 
 	DBG(cdev, "ncm deactivated\n");
 
 	hrtimer_cancel(&ncm->task_timer);
 
+	mutex_lock(&ncm_opts->lock);
 	if (ncm->netdev) {
 		WRITE_ONCE(ncm->netdev, NULL);
 		gether_disconnect(&ncm->port);
 	}
+	mutex_unlock(&ncm_opts->lock);
 
 	if (ncm->notify->enabled) {
 		usb_ep_disable(ncm->notify);
@@ -1692,10 +1703,12 @@ static void ncm_free_inst(struct usb_function_instance *f)
 #endif
 
 	opts = container_of(f, struct f_ncm_opts, func_inst);
-	if (opts->bound)
-		gether_cleanup(netdev_priv(opts->net));
-	else
-		free_netdev(opts->net);
+	if (opts->net) {
+		if (opts->bound)
+			gether_cleanup(netdev_priv(opts->net));
+		else
+			free_netdev(opts->net);
+	}
 	kfree(opts->ncm_interf_group);
 	kfree(opts);
 }
@@ -1748,15 +1761,12 @@ static struct usb_function_instance *ncm_alloc_inst(void)
 
 static void ncm_free(struct usb_function *f)
 {
-	struct f_ncm *ncm;
-	struct f_ncm_opts *opts;
+	struct f_ncm_opts *opts = func_to_ncm_opts(f);
 
-	ncm = func_to_ncm(f);
-	opts = container_of(f->fi, struct f_ncm_opts, func_inst);
-	kfree(ncm);
 	mutex_lock(&opts->lock);
 	opts->refcnt--;
 	mutex_unlock(&opts->lock);
+	kfree(func_to_ncm(f));
 }
 
 static void ncm_unbind(struct usb_configuration *c, struct usb_function *f)
