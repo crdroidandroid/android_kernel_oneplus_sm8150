@@ -1667,6 +1667,9 @@ static int get_args(uint32_t kernel, struct smq_invoke_ctx *ctx)
 			}
 			pages[idx].addr = map->phys + offset;
 			pages[idx].size = num << PAGE_SHIFT;
+			VERIFY(err, pages[idx].size <= map->size - offset);
+			if (err)
+				goto bail;
 		}
 		rpra[i].buf.pv = lrpra[i].buf.pv = buf;
 	}
