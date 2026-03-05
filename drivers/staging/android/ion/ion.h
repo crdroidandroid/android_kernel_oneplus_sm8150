@@ -34,7 +34,7 @@
 #include "../uapi/msm_ion.h"
 
 #define ION_ADSP_HEAP_NAME	"adsp"
-#define ION_SYSTEM_HEAP_NAME	"system"
+#define ION_SYSTEM_HEAP_NAME	"ion_system_heap"
 #define ION_MM_HEAP_NAME	"mm"
 #define ION_SPSS_HEAP_NAME	"spss"
 #define ION_SECURE_CARVEOUT_HEAP_NAME	"secure_carveout"
