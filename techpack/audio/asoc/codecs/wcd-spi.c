@@ -1510,7 +1510,26 @@ static int wcd_spi_suspend(struct device *dev)
 	struct wcd_spi_priv *wcd_spi = spi_get_drvdata(spi);
 	int rc = 0;
 
+	/*
+	 * Cancel any pending clock disable work before acquiring the
+	 * mutex.  If the delayed work is in the 500 ms grace period
+	 * (WCD_SPI_CLK_OFF_TIMER_MS), the clock state bit is still
+	 * set and wcd_spi_can_suspend() would return false, causing
+	 * a spurious -EBUSY that aborts system suspend.
+	 */
+	cancel_delayed_work_sync(&wcd_spi->clk_dwork);
+
 	WCD_SPI_MUTEX_LOCK(spi, wcd_spi->clk_mutex);
+
+	/*
+	 * If the delayed work was cancelled before it could run and
+	 * there are no active clock users, disable the clock now so
+	 * that wcd_spi_can_suspend() succeeds.
+	 */
+	if (wcd_spi->clk_users == 0 &&
+	    test_bit(WCD_SPI_CLK_STATE_ENABLED, &wcd_spi->status_mask))
+		wcd_spi_clk_disable(spi);
+
 	if (!wcd_spi_can_suspend(wcd_spi)) {
 		rc = -EBUSY;
 		goto done;
