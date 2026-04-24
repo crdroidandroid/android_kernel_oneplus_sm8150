@@ -818,6 +818,11 @@ static int dwc3_msm_ep_queue(struct usb_ep *ep,
 		return -EINVAL;
 	}
 
+	if (req->request.status == -EINPROGRESS) {
+		spin_unlock_irqrestore(&dwc->lock, flags);
+		return -EBUSY;
+	}
+
 	/* HW restriction regarding TRB size (8KB) */
 	if (req->request.length < 0x2000) {
 		dev_err(mdwc->dev, "%s: Min TRB size is 8KB\n", __func__);
@@ -870,8 +875,18 @@ static int dwc3_msm_ep_queue(struct usb_ep *ep,
 		dwc3_msm_read_reg(mdwc->base, DWC3_GEVNTADRHI(0)),
 		DWC3_GEVNTSIZ_SIZE(size));
 
+	req->request.actual = 0;
+	req->request.status = -EINPROGRESS;
+	req->direction = dep->direction;
+	req->epnum = dep->number;
+
 	ret = __dwc3_msm_ep_queue(dep, req);
 	if (ret < 0) {
+		req->request.status = ret;
+		req->started = false;
+		req->trb = NULL;
+		list_del(&req_complete->list_item);
+		request->complete = req_complete->orig_complete;
 		dev_err(mdwc->dev,
 			"error %d after calling __dwc3_msm_ep_queue\n", ret);
 		goto err;
