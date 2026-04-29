@@ -90,6 +90,33 @@ static int crypto_aead_copy_sgl(struct crypto_skcipher *null_tfm,
 	return crypto_skcipher_encrypt(skreq);
 }
 
+static int crypto_aead_alloc_rsgl_tail(struct sock *sk,
+				       struct af_alg_async_req *areq)
+{
+	struct af_alg_sgl *last_sgl;
+
+	if (!areq->last_rsgl || !areq->last_rsgl->sgl.npages)
+		return -EINVAL;
+
+	areq->rsgl_tail = sock_kmalloc(sk, sizeof(*areq->rsgl_tail),
+				       GFP_KERNEL);
+	if (!areq->rsgl_tail)
+		return -ENOMEM;
+
+	areq->rsgl_tail_buf = sock_kmalloc(sk, 4, GFP_KERNEL);
+	if (!areq->rsgl_tail_buf)
+		return -ENOMEM;
+
+	sg_init_table(areq->rsgl_tail, 1);
+	sg_set_buf(areq->rsgl_tail, areq->rsgl_tail_buf, 4);
+
+	last_sgl = &areq->last_rsgl->sgl;
+	sg_unmark_end(last_sgl->sg + last_sgl->npages - 1);
+	sg_chain(last_sgl->sg, last_sgl->npages + 1, areq->rsgl_tail);
+
+	return 0;
+}
+
 static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
 			 size_t ignored, int flags)
 {
@@ -101,9 +128,8 @@ static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
 	struct aead_tfm *aeadc = pask->private;
 	struct crypto_aead *tfm = aeadc->aead;
 	struct crypto_skcipher *null_tfm = aeadc->null_tfm;
-	unsigned int i, as = crypto_aead_authsize(tfm);
+	unsigned int as = crypto_aead_authsize(tfm);
 	struct af_alg_async_req *areq;
-	struct af_alg_tsgl *tsgl, *tmp;
 	struct scatterlist *rsgl_src, *tsgl_src = NULL;
 	int err = 0;
 	size_t used = 0;		/* [in]  TX bufs to be en/decrypted */
@@ -183,23 +209,30 @@ static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
 		outlen -= less;
 	}
 
-	processed = used + ctx->aead_assoclen;
-	list_for_each_entry_safe(tsgl, tmp, &ctx->tsgl_list, list) {
-		for (i = 0; i < tsgl->cur; i++) {
-			struct scatterlist *process_sg = tsgl->sg + i;
-
-			if (!(process_sg->length) || !sg_page(process_sg))
-				continue;
-			tsgl_src = process_sg;
-			break;
-		}
-		if (tsgl_src)
-			break;
+	if (!ctx->enc && as) {
+		err = crypto_aead_alloc_rsgl_tail(sk, areq);
+		if (err)
+			goto free;
 	}
-	if (processed && !tsgl_src) {
-		err = -EFAULT;
+
+	/*
+	 * Create a per request TX SGL for this request which tracks the
+	 * SG entries from the global TX SGL.
+	 */
+	processed = used + ctx->aead_assoclen;
+	areq->tsgl_entries = af_alg_count_tsgl(sk, processed, 0);
+	if (!areq->tsgl_entries)
+		areq->tsgl_entries = 1;
+	areq->tsgl = sock_kmalloc(sk, sizeof(*areq->tsgl) *
+				      areq->tsgl_entries,
+				  GFP_KERNEL);
+	if (!areq->tsgl) {
+		err = -ENOMEM;
 		goto free;
 	}
+	sg_init_table(areq->tsgl, areq->tsgl_entries);
+	af_alg_pull_tsgl(sk, processed, areq->tsgl, 0);
+	tsgl_src = areq->tsgl;
 
 	/*
 	 * Copy of AAD from source to destination
@@ -209,80 +242,19 @@ static int _aead_recvmsg(struct socket *sock, struct msghdr *msg,
 	 * will copy the data as it does not see whether such in-place operation
 	 * is initiated.
 	 *
-	 * To ensure efficiency, the following implementation ensure that the
-	 * ciphers are invoked to perform a crypto operation in-place. This
-	 * is achieved by memory management specified as follows.
 	 */
 
-	/* Use the RX SGL as source (and destination) for crypto op. */
-	rsgl_src = areq->first_rsgl.sgl.sg;
-
-	if (ctx->enc) {
-		/*
-		 * Encryption operation - The in-place cipher operation is
-		 * achieved by the following operation:
-		 *
-		 * TX SGL: AAD || PT
-		 *	    |	   |
-		 *	    | copy |
-		 *	    v	   v
-		 * RX SGL: AAD || PT || Tag
-		 */
-		err = crypto_aead_copy_sgl(null_tfm, tsgl_src,
-					   areq->first_rsgl.sgl.sg, processed);
+	if (ctx->aead_assoclen) {
+		/* Copy AAD into the RX SGL as expected by the userspace API. */
+		rsgl_src = areq->first_rsgl.sgl.sg;
+		err = crypto_aead_copy_sgl(null_tfm, tsgl_src, rsgl_src,
+					   ctx->aead_assoclen);
 		if (err)
 			goto free;
-		af_alg_pull_tsgl(sk, processed, NULL, 0);
-	} else {
-		/*
-		 * Decryption operation - To achieve an in-place cipher
-		 * operation, the following  SGL structure is used:
-		 *
-		 * TX SGL: AAD || CT || Tag
-		 *	    |	   |	 ^
-		 *	    | copy |	 | Create SGL link.
-		 *	    v	   v	 |
-		 * RX SGL: AAD || CT ----+
-		 */
-
-		 /* Copy AAD || CT to RX SGL buffer for in-place operation. */
-		err = crypto_aead_copy_sgl(null_tfm, tsgl_src,
-					   areq->first_rsgl.sgl.sg, outlen);
-		if (err)
-			goto free;
-
-		/* Create TX SGL for tag and chain it to RX SGL. */
-		areq->tsgl_entries = af_alg_count_tsgl(sk, processed,
-						       processed - as);
-		if (!areq->tsgl_entries)
-			areq->tsgl_entries = 1;
-		areq->tsgl = sock_kmalloc(sk, sizeof(*areq->tsgl) *
-					      areq->tsgl_entries,
-					  GFP_KERNEL);
-		if (!areq->tsgl) {
-			err = -ENOMEM;
-			goto free;
-		}
-		sg_init_table(areq->tsgl, areq->tsgl_entries);
-
-		/* Release TX SGL, except for tag data and reassign tag data. */
-		af_alg_pull_tsgl(sk, processed, areq->tsgl, processed - as);
-
-		/* chain the areq TX SGL holding the tag with RX SGL */
-		if (usedpages) {
-			/* RX SGL present */
-			struct af_alg_sgl *sgl_prev = &areq->last_rsgl->sgl;
-
-			sg_unmark_end(sgl_prev->sg + sgl_prev->npages - 1);
-			sg_chain(sgl_prev->sg, sgl_prev->npages + 1,
-				 areq->tsgl);
-		} else
-			/* no RX SGL present (e.g. authentication only) */
-			rsgl_src = areq->tsgl;
 	}
 
 	/* Initialize the crypto operation */
-	aead_request_set_crypt(&areq->cra_u.aead_req, rsgl_src,
+	aead_request_set_crypt(&areq->cra_u.aead_req, tsgl_src,
 			       areq->first_rsgl.sgl.sg, used, ctx->iv);
 	aead_request_set_ad(&areq->cra_u.aead_req, ctx->aead_assoclen);
 	aead_request_set_tfm(&areq->cra_u.aead_req, tfm);
