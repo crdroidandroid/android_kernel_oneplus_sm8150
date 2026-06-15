@@ -2274,14 +2274,11 @@ static int mp2650_pm_resume(struct device *dev)
     if (rc || suspend_tm_sec == -1) {
         chg_err("RTC read failed\n");
         sleep_time = 0;
+    } else if (resume_tm_sec < suspend_tm_sec) {
+        sleep_time = 0;
     } else {
         sleep_time = resume_tm_sec - suspend_tm_sec;
     }
-    /*
-    if(sleep_time < 0) {
-    sleep_time = 0;
-    }
-    */
     oplus_chg_soc_update_when_resume(sleep_time);
     return 0;
 
@@ -2323,14 +2320,11 @@ static int mp2650_resume(struct i2c_client *client)
     if (rc || suspend_tm_sec == -1) {
         chg_err("RTC read failed\n");
         sleep_time = 0;
+    } else if (resume_tm_sec < suspend_tm_sec) {
+        sleep_time = 0;
     } else {
         sleep_time = resume_tm_sec - suspend_tm_sec;
     }
-    /*
-    if(sleep_time < 0) {
-    sleep_time = 0;
-    }
-    */	
     oplus_chg_soc_update_when_resume(sleep_time);
     return 0;
 }
