@@ -703,7 +703,7 @@ static int zy0603_protect_check(void)
 
 	/*printk(KERN_ERR "[%s] v12 unseal start\n", __func__);*/
 	if (!gauge_ic || (gauge_ic && !gauge_ic->batt_zy0603) || (gauge_ic && gauge_ic->afi_count == 0)) {
-		printk(KERN_ERR "[%s] return for %s\n", __func__, !gauge_ic ? "guage is null" : "is not zy0603 gauge");
+		/*printk(KERN_ERR "[%s] return for %s\n", __func__, !gauge_ic ? "guage is null" : "is not zy0603 gauge");*/
 		return -1;
 	}
 
@@ -741,8 +741,8 @@ static int zy0603_protect_check(void)
 		}
 		/* error_occured = true; */
 	}
-	printk(KERN_ERR "[%s] checksum_error[%d %d] qmaxfg_error[%d, %d]\n",
-		__func__, checksum_error_flag, checksum_error, qmaxfg_error_flag, qmax_fgstatus_error);
+	/*printk(KERN_ERR "[%s] checksum_error[%d %d] qmaxfg_error[%d, %d]\n",
+		__func__, checksum_error_flag, checksum_error, qmaxfg_error_flag, qmax_fgstatus_error);*/
 
 	return 0;
 }
