@@ -130,6 +130,7 @@ static int32_t cam_csiphy_platform_probe(struct platform_device *pdev)
 	}
 
 	mutex_init(&new_csiphy_dev->mutex);
+	init_waitqueue_head(&new_csiphy_dev->probe_wq);
 	new_csiphy_dev->v4l2_dev_str.pdev = pdev;
 
 	new_csiphy_dev->soc_info.pdev = pdev;
