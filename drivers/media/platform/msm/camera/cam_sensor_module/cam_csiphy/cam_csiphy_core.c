@@ -561,7 +561,7 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 	int32_t i = 0, rc = 0;
 
 	if (csiphy_dev->csiphy_state == CAM_CSIPHY_INIT)
-		return;
+		goto wake_and_reset;
 
 	if (csiphy_dev->csiphy_state == CAM_CSIPHY_START) {
 		soc_info = &csiphy_dev->soc_info;
@@ -603,16 +603,19 @@ void cam_csiphy_shutdown(struct csiphy_device *csiphy_dev)
 		csiphy_dev->bridge_intf.session_hdl[1] = -1;
 	}
 
+wake_and_reset:
 	csiphy_dev->ref_count = 0;
 	csiphy_dev->is_acquired_dev_combo_mode = 0;
 	csiphy_dev->acquire_count = 0;
 	csiphy_dev->start_dev_count = 0;
+	csiphy_dev->config_count = 0;
 	csiphy_dev->csiphy_state = CAM_CSIPHY_INIT;
 
-	/* reset csiphy info */
 	csiphy_dev->csiphy_info.lane_mask = 0;
 	csiphy_dev->csiphy_info.lane_cnt = 0;
 	csiphy_dev->csiphy_info.combo_mode = 0;
+
+	wake_up_all(&csiphy_dev->probe_wq);
 }
 
 static int32_t cam_csiphy_external_cmd(struct csiphy_device *csiphy_dev,
@@ -678,8 +681,8 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 	case CAM_ACQUIRE_DEV: {
 		struct cam_sensor_acquire_dev csiphy_acq_dev;
 		struct cam_csiphy_acquire_dev_info csiphy_acq_params;
-
 		struct cam_create_dev_hdl bridge_params;
+		uint32_t inst_idx;
 
 		if (csiphy_dev->csiphy_state == CAM_CSIPHY_START) {
 			CAM_ERR(CAM_CSIPHY,
@@ -707,9 +710,10 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 			goto release_mutex;
 		}
 
-		if (csiphy_dev->acquire_count == 2) {
+		if (csiphy_dev->acquire_count >= CSIPHY_MAX_INSTANCES) {
 			CAM_ERR(CAM_CSIPHY,
-					"CSIPHY device do not allow more than 2 acquires");
+				"CSIPHY device do not allow more than %d acquires",
+				CSIPHY_MAX_INSTANCES);
 			rc = -EINVAL;
 			goto release_mutex;
 		}
@@ -726,13 +730,37 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		if ((csiphy_acq_params.combo_mode != 1) &&
 			(csiphy_dev->is_acquired_dev_combo_mode != 1) &&
-			(csiphy_dev->acquire_count == 1)) {
-			CAM_ERR(CAM_CSIPHY,
-				"Multiple Acquires are not allowed cm: %d acm: %d",
-				csiphy_acq_params.combo_mode,
-				csiphy_dev->is_acquired_dev_combo_mode);
-			rc = -EINVAL;
-			goto release_mutex;
+			(csiphy_dev->acquire_count > 0)) {
+			CAM_DBG(CAM_CSIPHY,
+				"CSIPHY busy, waiting for probe to complete");
+			mutex_unlock(&csiphy_dev->mutex);
+			rc = wait_event_interruptible_timeout(
+				csiphy_dev->probe_wq,
+				csiphy_dev->acquire_count == 0,
+				msecs_to_jiffies(CSIPHY_PROBE_TIMEOUT_MS));
+			mutex_lock(&csiphy_dev->mutex);
+
+			if (rc == 0) {
+				CAM_ERR(CAM_CSIPHY,
+					"CSIPHY probe wait timed out");
+				rc = -ETIMEDOUT;
+				goto release_mutex;
+			}
+			if (rc < 0) {
+				CAM_ERR(CAM_CSIPHY,
+					"CSIPHY probe wait interrupted");
+				goto release_mutex;
+			}
+
+			if (csiphy_dev->csiphy_state != CAM_CSIPHY_INIT) {
+				CAM_ERR(CAM_CSIPHY,
+					"CSIPHY state changed during wait: %d",
+					csiphy_dev->csiphy_state);
+				rc = -EINVAL;
+				goto release_mutex;
+			}
+
+			rc = 0;
 		}
 
 		bridge_params.ops = NULL;
@@ -756,10 +784,11 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 			goto release_mutex;
 		}
 
+		inst_idx = csiphy_acq_params.combo_mode;
 		bridge_intf = &csiphy_dev->bridge_intf;
-		bridge_intf->device_hdl[csiphy_acq_params.combo_mode]
+		bridge_intf->device_hdl[inst_idx]
 			= csiphy_acq_dev.device_handle;
-		bridge_intf->session_hdl[csiphy_acq_params.combo_mode] =
+		bridge_intf->session_hdl[inst_idx] =
 			csiphy_acq_dev.session_handle;
 
 		if (copy_to_user(u64_to_user_ptr(cmd->handle),
@@ -903,8 +932,9 @@ int32_t cam_csiphy_core_cfg(void *phy_dev,
 
 		if (csiphy_dev->acquire_count == 0) {
 			csiphy_dev->csiphy_state = CAM_CSIPHY_INIT;
-			/* reset config count */
 			csiphy_dev->config_count = 0;
+
+			wake_up_all(&csiphy_dev->probe_wq);
 		}
 
 		if (csiphy_dev->config_count == 0) {
