@@ -9,9 +9,7 @@ jobs:
       - name: Clone Kernel Source
         uses: actions/checkout@v4
         with:
-          ref: 16.0
           path: kernel
-          fetch-tags: false
 
       - name: Install Build Dependencies
         run: |
@@ -20,7 +18,8 @@ jobs:
 
       - name: Download crDroid Clang
         run: |
-          git clone https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547694.git clang
+          rm -rf clang
+          git clone --depth=1 https://mirror.ghproxy.com/https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547694.git clang
 
       - name: Compile Kernel Image
         run: |
