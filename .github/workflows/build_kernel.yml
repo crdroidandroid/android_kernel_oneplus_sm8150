@@ -1,0 +1,36 @@
+name: Build SM8150 HyperOS Kernel
+on:
+  workflow_dispatch:
+
+jobs:
+  compile:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Clone Kernel Source
+        uses: actions/checkout@v4
+        with:
+          ref: 16.0
+          path: kernel
+
+      - name: Install Build Dependencies
+        run: |
+          sudo apt update -y
+          sudo apt install -y git flex bc bison lzop libssl-dev libncurses-dev zip unzip ccache
+
+      - name: Download crDroid Clang
+        run: |
+          git clone https://github.com/crdroidandroid/android_prebuilts_clang_kernel clang
+
+      - name: Compile Kernel Image
+        run: |
+          export ARCH=arm64
+          export PATH=$PWD/clang/bin:$PATH
+          cd kernel
+          make O=out sm8150-perf_defconfig
+          make O=out -j$(nproc) CC=clang LD=ld.lld
+
+      - name: Upload Kernel Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          path: kernel/out/arch/arm64/boot/Image.gz-dtb
+          name: HyperOS-Kernel-Image
