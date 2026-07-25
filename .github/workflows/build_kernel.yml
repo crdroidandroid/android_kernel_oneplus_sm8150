@@ -11,7 +11,7 @@ jobs:
         with:
           ref: 16.0
           path: kernel
-
+          fetch-tags: false
       - name: Install Build Dependencies
         run: |
           sudo apt update -y
