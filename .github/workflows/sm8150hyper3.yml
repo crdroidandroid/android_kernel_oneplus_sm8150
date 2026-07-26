@@ -1,31 +1,58 @@
-name: Build SM8150 HyperOS Kernel
+name: Build Kernel for OnePlus SM8150 (HyperOS3)
+
 on:
   workflow_dispatch:
 
 jobs:
-  compile:
+  build:
     runs-on: ubuntu-22.04
     steps:
-      - name: Clone Kernel Source
+      - name: Checkout kernel source
         uses: actions/checkout@v4
         with:
-          path: kernel
+          repository: LineageOS/android_kernel_oneplus_sm8150
+          ref: 16
 
-      - name: Install Build Dependencies
+      - name: Install dependencies
         run: |
-          sudo apt update -y
-          sudo apt install -y git flex bison gcc-aarch64-linux-gnu g++-aarch64-linux-gnu libssl-dev libelf-dev make zip
+          sudo apt update
+          sudo apt install -y git wget curl python3 xz-utils flex bison \
+            openssl libssl-dev libelf-dev libudev-dev libpci-dev \
+            libiberty-dev autoconf llvm lld clang gcc g++ make bc cpio \
+            build-essential kmod device-tree-compiler zip
 
-      - name: Download crDroid Clang
+      - name: Setup Clang
         run: |
-          rm -rf clang
-          git clone --depth=1 https://mirror.ghproxy.com/https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547694.git clang
+          git clone --depth=1 https://github.com/crdroidandroid/android_prebuilts_clang_host_linux-x86_clang-r547694.git
+          echo "$(pwd)/android_prebuilts_clang_host_linux-x86_clang-r547694/bin" >> $GITHUB_PATH
 
-      - name: Compile Kernel Image
+      - name: Setup GCC (AArch64)
         run: |
-          export ARCH=arm64
-          export PATH=$PWD/clang/bin:$PATH
-          cd kernel
-          make clean && make mrproper
-          make oneplus_defconfig
-          make -j$(nproc)
+          git clone --depth=1 https://github.com/LineageOS/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9
+          echo "CROSS_COMPILE=$(pwd)/android_prebuilts_gcc_linux-x86_aarch64_aarch64-linux-android-4.9/bin/aarch64-linux-android-" >> $GITHUB_ENV
+
+      - name: Configure kernel
+        run: |
+          make O=out ARCH=arm64 vendor/sm8150-perf_defconfig
+
+      - name: Build kernel
+        run: |
+          make -j$(nproc) O=out ARCH=arm64 CC=clang LD=ld.lld \
+            CLANG_TRIPLE=aarch64-linux-gnu- \
+            CROSS_COMPILE=${{ env.CROSS_COMPILE }}
+
+      - name: Package for AnyKernel3
+        run: |
+          git clone --depth=1 https://github.com/osm0sis/AnyKernel3
+          cp out/arch/arm64/boot/Image.gz-dtb AnyKernel3/
+          cp out/arch/arm64/boot/dtbo.img AnyKernel3/ 2>/dev/null || true
+          cd AnyKernel3
+          echo "kernel=Image.gz-dtb" >> anykernel.sh
+          echo "device.name=guacamole" >> anykernel.sh   # 按你的设备修改
+          zip -r9 ../kernel-hyperos.zip *
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: kernel-build
+          path: kernel-hyperos.zip
