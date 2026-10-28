@@ -130,6 +130,8 @@ void cgroup_free(struct task_struct *p);
 int cgroup_init_early(void);
 int cgroup_init(void);
 
+int cgroup_parse_float(const char *input, unsigned dec_shift, s64 *v);
+
 /*
  * Iteration helpers and macros.
  */
@@ -848,7 +850,6 @@ void cgroup_update_frozen(struct cgroup *cgrp);
 void cgroup_freeze(struct cgroup *cgrp, bool freeze);
 void cgroup_freezer_migrate_task(struct task_struct *task, struct cgroup *src,
 				 struct cgroup *dst);
-void cgroup_freezer_frozen_exit(struct task_struct *task);
 static inline bool cgroup_task_freeze(struct task_struct *task)
 {
 	bool ret;
