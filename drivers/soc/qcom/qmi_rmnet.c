@@ -57,6 +57,11 @@ MODULE_PARM_DESC(rmnet_wq_frequency, "Frequency of PS check in ms");
 #define NO_DELAY (0x0000 * HZ)
 #define PS_INTERVAL_KT (ms_to_ktime(1000))
 #define WATCHDOG_EXPIRE_JF (msecs_to_jiffies(50))
+/* Nothing but this watchdog releases a bearer held by rat_switch or tx_off
+ * while the link is idle, so a lost end or TX link on indication would
+ * otherwise disable it for good.
+ */
+#define HOLD_EXPIRE_JF (msecs_to_jiffies(5000))
 
 #ifdef CONFIG_QCOM_QMI_DFC
 static unsigned int qmi_rmnet_scale_factor = 5;
@@ -253,6 +258,14 @@ static void qmi_rmnet_watchdog_fn(struct timer_list *t)
 	if (bearer->watchdog_quit)
 		goto done;
 
+	if (qmi_rmnet_bearer_held(bearer)) {
+		pr_info("dfc: mux %u bearer %u hold timed out (RAT switch %d, TX link off %d)\n",
+			bearer->qos->mux_id, bearer->bearer_id,
+			bearer->rat_switch, bearer->tx_off);
+		bearer->rat_switch = false;
+		bearer->tx_off = false;
+	}
+
 	/*
 	 * Possible stall, try to recover. Enable 80% query and jumpstart
 	 * the bearer if disabled.
@@ -284,7 +297,8 @@ void qmi_rmnet_watchdog_add(struct rmnet_bearer_map *bearer)
 		return;
 
 	bearer->watchdog_started = true;
-	mod_timer(&bearer->watchdog, jiffies + WATCHDOG_EXPIRE_JF);
+	mod_timer(&bearer->watchdog, jiffies + (qmi_rmnet_bearer_held(bearer) ?
+		  HOLD_EXPIRE_JF : WATCHDOG_EXPIRE_JF));
 
 	trace_dfc_watchdog(bearer->qos->mux_id, bearer->bearer_id, 1);
 }
@@ -837,10 +851,10 @@ void qmi_rmnet_enable_all_flows(struct net_device *dev)
 		bearer->tcp_bidir = false;
 		bearer->rat_switch = false;
 
-		qmi_rmnet_watchdog_remove(bearer);
-
 		if (bearer->tx_off)
 			continue;
+
+		qmi_rmnet_watchdog_remove(bearer);
 
 		do_wake = !bearer->grant_size;
 		bearer->grant_size = DEFAULT_GRANT;

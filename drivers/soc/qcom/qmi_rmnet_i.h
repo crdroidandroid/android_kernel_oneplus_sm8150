@@ -62,6 +62,11 @@ struct rmnet_bearer_map {
 	u32 watchdog_expire_cnt;
 };
 
+static inline bool qmi_rmnet_bearer_held(struct rmnet_bearer_map *bearer)
+{
+	return bearer->rat_switch || bearer->tx_off;
+}
+
 struct rmnet_flow_map {
 	struct list_head list;
 	u8 bearer_id;
@@ -166,6 +171,14 @@ struct rmnet_bearer_map *qmi_rmnet_get_bearer_noref(struct qos_info *qos_info,
 void qmi_rmnet_watchdog_add(struct rmnet_bearer_map *bearer);
 
 void qmi_rmnet_watchdog_remove(struct rmnet_bearer_map *bearer);
+
+/* Needs to be called with qos_lock */
+static inline void qmi_rmnet_watchdog_sync(struct rmnet_bearer_map *bearer)
+{
+	qmi_rmnet_watchdog_remove(bearer);
+	if (qmi_rmnet_bearer_held(bearer))
+		qmi_rmnet_watchdog_add(bearer);
+}
 
 #else
 static inline struct rmnet_flow_map *

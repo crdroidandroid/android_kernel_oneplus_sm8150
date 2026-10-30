@@ -1010,6 +1010,7 @@ static int dfc_update_fc_map(struct net_device *dev, struct qos_info *qos,
 			pr_info("dfc: mux %u bearer %u RAT switch %s\n",
 				fc_info->mux_id, fc_info->bearer_id,
 				itm->rat_switch ? "start" : "end");
+			qmi_rmnet_watchdog_sync(itm);
 		} else if (itm->rat_switch) {
 			return 0;
 		}
@@ -1055,7 +1056,7 @@ static int dfc_update_fc_map(struct net_device *dev, struct qos_info *qos,
 		} else {
 			itm->grant_thresh =
 				qmi_rmnet_grant_per(itm->grant_size);
-			qmi_rmnet_watchdog_remove(itm);
+			qmi_rmnet_watchdog_sync(itm);
 		}
 
 		itm->seq = fc_info->seq_num;
@@ -1176,6 +1177,7 @@ static void dfc_update_tx_link_status(struct net_device *dev,
 	}
 
 	itm->tx_off = !tx_status;
+	qmi_rmnet_watchdog_sync(itm);
 }
 
 void dfc_handle_tx_link_status_ind(struct dfc_qmi_data *dfc,
