@@ -1005,11 +1005,14 @@ static int dfc_update_fc_map(struct net_device *dev, struct qos_info *qos,
 		/* The RAT switch flag indicates the start and end of
 		 * the switch. Ignore indications in between.
 		 */
-		if (DFC_IS_RAT_SWITCH(ancillary))
+		if (DFC_IS_RAT_SWITCH(ancillary)) {
 			itm->rat_switch = !fc_info->num_bytes;
-		else
-			if (itm->rat_switch)
-				return 0;
+			pr_info("dfc: mux %u bearer %u RAT switch %s\n",
+				fc_info->mux_id, fc_info->bearer_id,
+				itm->rat_switch ? "start" : "end");
+		} else if (itm->rat_switch) {
+			return 0;
+		}
 
 		/* If TX is OFF but we received grant from the same modem,
 		 * ignore it. If the grant is from a different modem,
@@ -1153,6 +1156,10 @@ static void dfc_update_tx_link_status(struct net_device *dev,
 	/* If no change in tx status, ignore */
 	if (itm->tx_off == !tx_status)
 		return;
+
+	pr_info_ratelimited("dfc: mux %u bearer %u TX link %s\n",
+			    binfo->mux_id, binfo->bearer_id,
+			    tx_status ? "on" : "off");
 
 	if (itm->grant_size && !tx_status) {
 		itm->grant_size = 0;
