@@ -77,3 +77,4 @@ config NTAG_NQ
           This is for i2c connected version.
 
 source "drivers/nfc/max32560/Kconfig"
+source "drivers/nfc/sn-nci/Kconfig"
