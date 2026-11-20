@@ -3689,12 +3689,16 @@ static int qg_request_irqs(struct qpnp_qg *chip)
 					    prop, name) {
 			rc = qg_request_interrupt(chip, child, name);
 			if (rc < 0)
-				return rc;
+				goto out;
 		}
 	}
 
 
 	return 0;
+
+out:
+	of_node_put(child);
+	return rc;
 }
 
 #define QG_TTF_ITERM_DELTA_MA		1
@@ -3855,13 +3859,13 @@ static int qg_parse_dt(struct qpnp_qg *chip)
 		rc = of_property_read_u32(child, "reg", &base);
 		if (rc < 0) {
 			pr_err("Failed to read base address, rc=%d\n", rc);
-			return rc;
+			goto out;
 		}
 
 		rc = qg_read(chip, base + PERPH_TYPE_REG, &type, 1);
 		if (rc < 0) {
 			pr_err("Failed to read type, rc=%d\n", rc);
-			return rc;
+			goto out;
 		}
 
 		switch (type) {
@@ -4215,6 +4219,10 @@ static int qg_parse_dt(struct qpnp_qg *chip)
 			chip->dt.delta_soc, chip->dt.qg_ext_sense);
 
 	return 0;
+
+out:
+	of_node_put(child);
+	return rc;
 }
 
 static int process_suspend(struct qpnp_qg *chip)
