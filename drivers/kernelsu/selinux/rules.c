@@ -78,6 +78,10 @@ static void reset_avc_cache()
     selinux_status_update_policyload(&selinux_state, seqno);
 #endif
     selinux_xfrm_notify_policyload();
+#ifdef CONFIG_KSU_SUSFS
+    /* refresh the SUSFS cached SIDs after the policy reloaded */
+    susfs_set_batch_sid();
+#endif
 }
 
 #ifndef SELINUX_POLICY_INSTEAD_SELINUX_SS

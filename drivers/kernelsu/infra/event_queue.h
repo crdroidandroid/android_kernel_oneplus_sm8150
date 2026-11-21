@@ -11,7 +11,8 @@
 #include <linux/wait.h>
 
 #include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 16, 0)
+/* __poll_t was introduced in v4.12, older kernels need the shim */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 typedef unsigned int __poll_t;
 #endif
 

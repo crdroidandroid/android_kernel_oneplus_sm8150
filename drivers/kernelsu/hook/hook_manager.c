@@ -308,7 +308,7 @@ int ksu_handle_init_mark_tracker(const char __user **filename_user)
 static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 {
 	if (unlikely(check_syscall_fastpath(id))) {
-		if (ksu_su_compat_enabled) {
+		if (static_branch_likely(&ksu_su_compat_enabled)) {
 			// Handle newfstatat (y compatibilidad con arquitecturas híbridas)
 #ifdef __NR_fstatat64
 			if (id == __NR_newfstatat || id == __NR_fstatat64) {
@@ -319,7 +319,7 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 				const char __user **filename_user =
 					(const char __user **)&PT_REGS_PARM2(regs);
 				int *flags = (int *)&PT_REGS_SYSCALL_PARM4(regs);
-				ksu_handle_stat(dfd, filename_user, flags);
+				ksu_handle_stat_sucompat(dfd, filename_user, flags);
 				return;
 			}
 
@@ -329,7 +329,7 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 				const char __user **filename_user =
 					(const char __user **)&PT_REGS_PARM2(regs);
 				int *mode = (int *)&PT_REGS_PARM3(regs);
-				ksu_handle_faccessat(dfd, filename_user, mode, NULL);
+				ksu_handle_faccessat_sucompat(dfd, filename_user, mode, NULL);
 				return;
 			}
 
@@ -351,6 +351,14 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 					is_execveat ?
 						(const char __user **)&PT_REGS_PARM2(regs) :
 						(const char __user **)&PT_REGS_PARM1(regs);
+#ifdef CONFIG_KSU_SUSFS
+				/*
+				 * SUSFS moves sucompat and adb root into the manual
+				 * hooks in fs/exec.c so that they run outside of the
+				 * syscall tracepoint. Leave the tracepoint alone here.
+				 */
+				return;
+#else
 				long adb_ret;
 				if (current->pid != 1 && is_init(current_cred())) {
 					ksu_handle_init_mark_tracker(filename_user);
@@ -366,6 +374,7 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 					ksu_handle_execve_sucompat(filename_user, 0, regs);
 				}
 				return;
+#endif
 			}
 		}
 
@@ -374,7 +383,12 @@ static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 			uid_t ruid = (uid_t)PT_REGS_PARM1(regs);
 			uid_t euid = (uid_t)PT_REGS_PARM2(regs);
 			uid_t suid = (uid_t)PT_REGS_PARM3(regs);
+#ifdef CONFIG_KSU_SUSFS
+			ksu_handle_setresuid(current_uid().val, current_euid().val,
+					     current_suid().val);
+#else
 			ksu_handle_setresuid(current_uid().val, ruid);
+#endif
 			return;
 		}
 	}

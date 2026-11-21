@@ -19,6 +19,7 @@
 #endif
 
 #include "compat/kernel_compat.h"
+#include "runtime/ksud.h"
 #include "feature/sulog.h"
 #include "infra/event_queue.h"
 #include "klog.h" // IWYU pragma: keep
@@ -357,6 +358,68 @@ static __u32 ksu_sulog_flatten_argv_kern(const char *const *argv, char *dst, __u
     return used + 1;
 }
 
+/*
+ * Variant used by the manual execveat hook: the filename is already in
+ * kernel memory but argv still lives in userspace and is described by the
+ * kernel's own struct user_arg_ptr.
+ */
+static __u32 ksu_sulog_flatten_argv_uptr(struct user_arg_ptr *argv_user, char *dst, __u32 dst_len)
+{
+    char arg[KSU_SULOG_MAX_ARG_CHUNK];
+    __u32 used = 0;
+    int i;
+
+    if (!dst_len)
+        return 0;
+
+    if (!argv_user)
+        return ksu_sulog_copy_empty_string(dst);
+
+    for (i = 0; i < KSU_SULOG_MAX_ARG_STRINGS; i++) {
+        const char __user *arg_user;
+        long copied;
+        size_t arg_len;
+
+        if (fatal_signal_pending(current))
+            break;
+
+        arg_user = get_user_arg_ptr(*argv_user, i);
+        if (!arg_user)
+            break;
+        if (IS_ERR(arg_user))
+            return ksu_sulog_copy_empty_string(dst);
+
+        copied = strncpy_from_user_nofault(arg,
+                        (const void __user *)untagged_addr((unsigned long)arg_user),
+                        sizeof(arg));
+        if (copied <= 0)
+            return ksu_sulog_copy_empty_string(dst);
+
+        if (copied >= sizeof(arg))
+            arg[sizeof(arg) - 1] = '\0';
+
+        arg_len = strnlen(arg, sizeof(arg));
+        if (!arg_len)
+            continue;
+
+        if (used && used < dst_len - 1)
+            dst[used++] = ' ';
+
+        if (used >= dst_len - 1)
+            break;
+
+        arg_len = min_t(size_t, arg_len, dst_len - used - 1);
+        memcpy(dst + used, arg, arg_len);
+        used += arg_len;
+
+        if (used >= dst_len - 1)
+            break;
+    }
+
+    dst[used] = '\0';
+    return used + 1;
+}
+
 static struct ksu_sulog_pending_event *ksu_sulog_capture(__u16 event_type, const void *filename,
                                                          const void *argv, gfp_t gfp, bool from_kernel)
 {
@@ -476,6 +539,68 @@ struct ksu_sulog_pending_event *ksu_sulog_capture_root_execve_kern(const char *f
                                                                    const char *const *argv, gfp_t gfp)
 {
     return ksu_sulog_capture(KSU_SULOG_EVENT_ROOT_EXECVE, filename, argv, gfp, true);
+}
+
+struct ksu_sulog_pending_event *ksu_sulog_capture_sucompat_uptr(const char *filename,
+                                                                struct user_arg_ptr *argv_user,
+                                                                gfp_t gfp)
+{
+    struct ksu_sulog_pending_event *pending = NULL;
+    struct ksu_sulog_event *event;
+    void *payload = NULL;
+    __u32 payload_len;
+    __u32 filename_len;
+    __u32 argv_len;
+    __u32 remaining;
+    char *filename_buf;
+    char *argv_buf;
+
+    if (!ksu_sulog_is_enabled())
+        return NULL;
+
+    pending = kzalloc(sizeof(*pending), gfp);
+    if (!pending)
+        goto out_drop;
+
+    payload = kzalloc(KSU_SULOG_MAX_PAYLOAD_LEN, gfp);
+    if (!payload)
+        goto out_free_pending;
+
+    event = payload;
+    ksu_sulog_fill_task_info(event, KSU_SULOG_EVENT_SUCOMPAT, 0);
+
+    remaining = KSU_SULOG_MAX_PAYLOAD_LEN - sizeof(*event);
+    filename_buf = (char *)payload + sizeof(*event);
+    filename_len = ksu_sulog_copy_filename_kern(filename, filename_buf,
+                                                min(remaining, KSU_SULOG_MAX_FILENAME_LEN));
+    if (!filename_len)
+        goto out_free_payload;
+
+    remaining -= filename_len;
+    argv_buf = filename_buf + filename_len;
+    argv_len = ksu_sulog_flatten_argv_uptr(argv_user, argv_buf, remaining);
+    if (!argv_len)
+        goto out_free_payload;
+
+    event->filename_len = filename_len;
+    event->argv_len = argv_len;
+
+    if (check_add_overflow((__u32)sizeof(*event), filename_len, &payload_len) ||
+        check_add_overflow(payload_len, argv_len, &payload_len))
+        goto out_free_payload;
+
+    pending->event_type = KSU_SULOG_EVENT_SUCOMPAT;
+    pending->payload = payload;
+    pending->payload_len = payload_len;
+    return pending;
+
+out_free_payload:
+    kfree(payload);
+out_free_pending:
+    kfree(pending);
+out_drop:
+    ksu_event_queue_drop(&sulog_queue);
+    return NULL;
 }
 
 void ksu_sulog_emit_pending(struct ksu_sulog_pending_event *pending, int retval, gfp_t gfp)
