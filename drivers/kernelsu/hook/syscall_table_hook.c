@@ -193,7 +193,7 @@ static long ksu_sth_faccessat(const struct pt_regs *regs)
 		(const char __user **)&PT_REGS_PARM2(regs);
 	int *mode = (int *)&PT_REGS_PARM3(regs);
 
-	ksu_handle_faccessat(dfd, filename_user, mode, NULL);
+	ksu_handle_faccessat_sucompat(dfd, filename_user, mode, NULL);
 
 	return ksu_sth_call_orig(__NR_faccessat, regs);
 }
@@ -207,7 +207,7 @@ static long ksu_sth_newfstatat(const struct pt_regs *regs)
 		(const char __user **)&PT_REGS_PARM2(regs);
 	int *flags = (int *)&PT_REGS_SYSCALL_PARM4(regs);
 
-	ksu_handle_stat(dfd, filename_user, flags);
+	ksu_handle_stat_sucompat(dfd, filename_user, flags);
 
 	return ksu_sth_call_orig(__NR_newfstatat, regs);
 }

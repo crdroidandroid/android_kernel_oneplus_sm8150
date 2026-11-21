@@ -22,6 +22,11 @@
 #endif
 #include <linux/ptrace.h>
 #include <linux/fcntl.h>
+#include <linux/namei.h>
+#include <linux/fs_struct.h>
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs_def.h>
+#endif
 
 #include "objsec.h"
 
@@ -36,23 +41,32 @@
 #include "policy/app_profile.h"
 #include "selinux/selinux.h"
 #include "sulog/event.h"
+#include "feature/adb_root.h"
+#include "supercall/supercall.h"
 #include "util.h"
 
 #define SU_PATH "/system/bin/su"
 #define SH_PATH "/system/bin/sh"
 
-bool ksu_su_compat_enabled __read_mostly = true;
+/*
+ * A static key so that the hooks in fs/exec.c, fs/open.c and fs/stat.c can
+ * be patched out entirely when sucompat is disabled from the manager.
+ */
+DEFINE_STATIC_KEY_TRUE(ksu_su_compat_enabled);
 
 static int su_compat_feature_get(u64 *value)
 {
-	*value = ksu_su_compat_enabled ? 1 : 0;
+	*value = static_key_enabled(&ksu_su_compat_enabled) ? 1 : 0;
 	return 0;
 }
 
 static int su_compat_feature_set(u64 value)
 {
 	bool enable = value != 0;
-	ksu_su_compat_enabled = enable;
+	if (enable)
+		static_branch_enable(&ksu_su_compat_enabled);
+	else
+		static_branch_disable(&ksu_su_compat_enabled);
 	pr_info("su_compat: set to %d\n", enable);
 	return 0;
 }
@@ -78,12 +92,12 @@ static char __user *ksud_user_path(void)
 	return userspace_stack_buffer(ksud_path, sizeof(ksud_path));
 }
 
-int ksu_handle_faccessat(int *dfd, const char __user **filename_user,
+int ksu_handle_faccessat_sucompat(int *dfd, const char __user **filename_user,
 		int *mode, int *__unused_flags)
 {
 	const char su[] = SU_PATH;
 
-	if (!ksu_su_compat_enabled) {
+	if (!static_key_enabled(&ksu_su_compat_enabled)) {
 		return 0;
 	}
 
@@ -104,12 +118,12 @@ int ksu_handle_faccessat(int *dfd, const char __user **filename_user,
 	return 0;
 }
 
-int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags)
+int ksu_handle_stat_sucompat(int *dfd, const char __user **filename_user, int *flags)
 {
 	// const char sh[] = SH_PATH;
 	const char su[] = SU_PATH;
 
-	if (!ksu_su_compat_enabled){
+	if (!static_key_enabled(&ksu_su_compat_enabled)) {
 		return 0;
 	}
 
@@ -134,6 +148,121 @@ int ksu_handle_stat(int *dfd, const char __user **filename_user, int *flags)
 	return 0;
 }
 
+#ifdef CONFIG_KSU_SUSFS
+/*
+ * Filename based variants used by the manual hooks in fs/open.c and fs/stat.c.
+ * The name is already in the kernel, so no copy_from_user is needed and the
+ * existing pc->name buffer can be patched in place.
+ */
+int ksu_handle_faccessat(int *dfd, struct filename **filename, int *mode,
+			 int *__unused_flags)
+{
+	static const char su_path[] = SU_PATH;
+	static const char sh_path[] = SH_PATH;
+
+	if (unlikely(!filename || IS_ERR(*filename) || !(*filename)->name))
+		return 0;
+
+	if (likely(memcmp((*filename)->name, su_path, sizeof(su_path))))
+		return 0;
+
+	pr_info("ksu_handle_faccessat: su->sh!\n");
+	memcpy((void *)((*filename)->name), sh_path, sizeof(sh_path));
+	return 0;
+}
+
+int ksu_handle_stat(int *dfd, struct filename **filename, int *flags)
+{
+	static const char su_path[] = SU_PATH;
+	static const char sh_path[] = SH_PATH;
+
+	if (unlikely(!filename || IS_ERR(*filename) || !(*filename)->name))
+		return 0;
+
+	if (likely(memcmp((*filename)->name, su_path, sizeof(su_path))))
+		return 0;
+
+	pr_info("ksu_handle_stat: su->sh!\n");
+	memcpy((void *)((*filename)->name), sh_path, sizeof(sh_path));
+	return 0;
+}
+
+/*
+ * Shared prologue for the manual-hook execveat path: take care of adb root for
+ * init spawned processes, and mark every other exec as "no sucompat" so the
+ * SUSFS fast paths in fs/ can short circuit the hooks.
+ *
+ * return 0  -> no further sucompat handling is required
+ * return !0 -> the caller should continue with the sucompat checks
+ */
+int ksu_handle_execveat_init(struct filename *filename,
+			     struct user_arg_ptr *argv_user,
+			     struct user_arg_ptr *envp_user)
+{
+	int ret;
+
+	if (current->pid == 1)
+		return -EINVAL;
+
+	if (!is_init(get_current_cred()))
+		return -EINVAL;
+
+	if (unlikely(!strcmp(filename->name, KSUD_PATH))) {
+		const char __user *argv_user_ptr = get_user_arg_ptr(*argv_user, 0);
+		struct ksu_sulog_pending_event *pending_sucompat = NULL;
+
+		pr_info("hook_manager: escape to root for init executing ksud: %d\n", current->pid);
+		pending_sucompat = ksu_sulog_capture_sucompat_uptr(filename->name, argv_user, GFP_KERNEL);
+		escape_to_root_for_init();
+		if (!argv_user_ptr || IS_ERR(argv_user_ptr)) {
+			pr_err("!argv_user_ptr || IS_ERR(argv_user_ptr)\n");
+			return 0;
+		}
+		ksu_sulog_emit_pending(pending_sucompat, 0, GFP_KERNEL);
+		return 0;
+	}
+
+	if (likely(!strstr(filename->name, "/app_process") &&
+		   !strstr(filename->name, "/adbd") &&
+		   !strstr(filename->name, "/stub_zygote"))) {
+		pr_info("susfs: mark no sucompat checks for pid: '%d', exec: '%s'\n",
+			current->pid, filename->name);
+		susfs_set_current_proc_no_su();
+		/*
+		 * Marking the proc umounted here is useless because only zygote
+		 * spawned processes will umount the sus mounts, though other
+		 * susfs features still rely on the proc_umounted check, it is
+		 * fine to not spoof for init spawned processes.
+		 */
+		return 0;
+	}
+
+#ifdef CONFIG_COMPAT
+	if (unlikely(envp_user->is_compat))
+		ret = ksu_adb_root_handle_execveat(filename->name, (void ***)&envp_user->ptr.compat);
+	else
+		ret = ksu_adb_root_handle_execveat(filename->name, (void ***)&envp_user->ptr.native);
+#else
+	ret = ksu_adb_root_handle_execveat(filename->name, (void ***)&envp_user->ptr.native);
+#endif
+
+	if (ret)
+		pr_err("adb root failed: %d\n", ret);
+
+	return ret;
+}
+
+int ksu_handle_post_execveat_sucompat(int *fd, struct filename **filename_ptr,
+				      void *argv_user, void *envp_user,
+				      int *flags, int *retval)
+{
+	if (*retval >= 0) {
+		(void)ksu_install_su_fd();
+	}
+	return 0;
+}
+#endif // #ifdef CONFIG_KSU_SUSFS
+
 static long ksu_handle_execve_sucompat_common(const char __user **filename_user,
 		const char __user *const __user *argv_user, bool execveat,
 		const struct pt_regs *regs)
@@ -152,7 +281,7 @@ static long ksu_handle_execve_sucompat_common(const char __user **filename_user,
 	if (unlikely(!filename_user))
 		goto do_orig_execve;
 
-	if (!ksu_su_compat_enabled)
+	if (!static_key_enabled(&ksu_su_compat_enabled))
 		goto do_orig_execve;
 
 	if (!ksu_is_allow_uid_for_current(current_uid().val))
@@ -233,38 +362,56 @@ long ksu_handle_execveat_sucompat_user(const char __user **filename_user, int or
 }
 
 int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
-				 void *__never_use_argv, void *__never_use_envp,
-				 int *__never_use_flags)
+				 void *argv_user, void *envp_user,
+				 int *flags)
 {
 	struct filename *filename;
 	const char su[] = SU_PATH;
 	static const char ksud_path[] = KSUD_PATH;
 	struct ksu_sulog_pending_event *pending_root = NULL;
-	const char *const *sucompat_argv = (const char *const *)__never_use_argv;
+	int ret;
 
 	if (unlikely(!filename_ptr))
-		return 0;
+		return -EINVAL;
 
-	if (!ksu_su_compat_enabled)
-		return 0;
-
-	if (!ksu_is_allow_uid_for_current(current_uid().val))
-		return 0;
+	if (!static_key_enabled(&ksu_su_compat_enabled))
+		return -EINVAL;
 
 	filename = *filename_ptr;
 	if (IS_ERR(filename))
-		return 0;
+		return -EINVAL;
+
+#ifdef CONFIG_KSU_SUSFS
+	/*
+	 * Must run before the allowlist check: init spawned processes (which
+	 * carry the adb root and the ksud bootstrap) are normally not in the
+	 * allowlist and would otherwise never be marked TIF_PROC_NO_SU.
+	 */
+	if (!ksu_handle_execveat_init(filename, (struct user_arg_ptr *)argv_user,
+				      (struct user_arg_ptr *)envp_user))
+		return -EINVAL;
+#endif
+
+	if (!ksu_is_allow_uid_for_current(current_uid().val))
+		return -EINVAL;
 
 	if (likely(memcmp(filename->name, su, sizeof(su))))
-		return 0;
+		return -EINVAL;
 
 	pr_info("do_execveat_common su found\n");
 
-	pending_root = ksu_sulog_capture_root_execve_kern(filename->name, sucompat_argv, GFP_KERNEL);
+	pending_root = ksu_sulog_capture_sucompat_uptr(filename->name,
+			(struct user_arg_ptr *)argv_user, GFP_KERNEL);
 
 	memcpy((void *)filename->name, ksud_path, sizeof(ksud_path));
 
-	escape_with_root_profile();
+	ret = escape_with_root_profile();
+	if (ret) {
+		pr_err("escape_with_root_profile failed: %d\n", ret);
+		ksu_sulog_emit_pending(pending_root, ret, GFP_KERNEL);
+		return -EINVAL;
+	}
+
 	ksu_sulog_emit_pending(pending_root, 0, GFP_KERNEL);
 
 	return 0;

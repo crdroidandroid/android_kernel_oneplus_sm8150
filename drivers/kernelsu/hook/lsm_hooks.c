@@ -104,7 +104,11 @@ static int ksu_task_fix_setuid(struct cred *new, const struct cred *old,
 {
 	kuid_t new_uid = new->uid;
 
+#ifdef CONFIG_KSU_SUSFS
+	return ksu_handle_setresuid(new_uid.val, new->euid.val, new->suid.val);
+#else
 	return ksu_handle_setresuid(old->uid.val, new_uid.val);
+#endif
 }
 
 #ifndef DEVPTS_SUPER_MAGIC

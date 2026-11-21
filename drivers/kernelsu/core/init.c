@@ -5,6 +5,9 @@
 #include <linux/rcupdate.h>
 #include <linux/sched.h>
 #include <linux/workqueue.h>
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
+#endif
 
 #include "preinit/preinit.h"
 #include "policy/allowlist.h"
@@ -147,6 +150,10 @@ int __init kernelsu_init(void)
 	ksu_lsm_hook_init();
 
 	ksu_selinux_hide_init();
+
+#ifdef CONFIG_KSU_SUSFS
+	susfs_init();
+#endif
 
 	ksu_supercalls_init();
 
