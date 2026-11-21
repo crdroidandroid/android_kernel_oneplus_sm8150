@@ -4,6 +4,10 @@
 #include <linux/printk.h>
 #include <linux/workqueue.h>
 
+#ifdef CONFIG_KSU_SUSFS
+#include <linux/susfs.h>
+#endif
+
 #include "feature/selinux_hide.h"
 
 #include "policy/allowlist.h"
@@ -110,4 +114,8 @@ void on_boot_completed(void)
     pr_info("on_boot_completed!\n");
     track_throne(true);
     ksu_avc_spoof_late_init();
+#ifdef CONFIG_KSU_SUSFS
+    /* start watching /data/media/0/Android so sus mounts can be hidden */
+    susfs_start_sdcard_monitor_fn();
+#endif
 }
