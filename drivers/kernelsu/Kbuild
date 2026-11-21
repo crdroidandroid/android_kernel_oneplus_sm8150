@@ -15,6 +15,9 @@ kernelsu-objs += infra/file_wrapper.o
 kernelsu-objs += infra/event_queue.o
 kernelsu-objs += infra/seccomp_cache.o
 kernelsu-objs += infra/su_mount_ns.o
+# ksu_lookup_kernel_symbols() backs KSU_IOCTL_LOOKUP_SYMBOLS (uapi 6), which
+# userspace may call in any hook mode, not just syscall table patching.
+kernelsu-objs += infra/symbol_resolver.o
 
 ifneq ($(CONFIG_KSU_DISABLE_MANAGER),y)
 kernelsu-objs += manager/apk_sign.o
@@ -124,12 +127,17 @@ MDIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
 # Try to detect Git repo intelligently
 # The KernelSU sources are vendored into the kernel tree, so the version
 # cannot be derived from git here: the commit count would be the kernel's.
-# Pin the values that match KernelSU-Next legacy e5f5ec99 instead. The
-# reported ksuver has to stay >= the manager's MINIMAL_SUPPORTED_KERNEL
-# (33188) and the tag matches the manager release it pairs with.
+# Pin the values that match the imported KernelSU-Next legacy revision
+# (origin/legacy e5f5ec99) instead.
 KSU_GIT_VERSION := 3038
 KSU_GIT_TAG := v3.4.0-legacy
 KSU_GIT_VERSION_VALID := 1
+
+# The legacy line trails the matching manager release, so 30000 + 3038 + 289
+# reports 33327 while the 3.4.2 manager's own versionCode is 33355. Pin the
+# reported ksuver to the manager's value so the manager does not flag the
+# kernel as older than itself.
+KSU_VERSION_OVERRIDE := 33355
 
 # Calculate version if git version is available
 ifdef KSU_GIT_VERSION_VALID
@@ -203,7 +211,6 @@ ccflags-y += -DKSU_SYSCALL_TABLE_HOOK
 HAVE_KSU_HOOK := 0
 kernelsu-objs += hook/patch_memory.o
 kernelsu-objs += hook/syscall_table_hook.o
-kernelsu-objs += infra/symbol_resolver.o
 endif
 
 ifeq ($(CONFIG_KSU_MANUAL_HOOK), y)

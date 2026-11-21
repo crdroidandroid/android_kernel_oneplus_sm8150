@@ -11,6 +11,7 @@
 #include <linux/uaccess.h>
 #include <linux/version.h>
 #include <linux/utsname.h> // utsname() and uts_sem
+#include <linux/module.h>
 
 #include "uapi/supercall.h"
 #include "supercall/internal.h"
@@ -26,6 +27,20 @@
 #endif
 
 uint32_t ksuver_override = 0;
+
+/*
+ * Reported KERNEL_SU_UAPI_VERSION. 0 keeps the compiled-in value.
+ *
+ * The manager warns when its own uapi is lower than the kernel's, and ksud
+ * aborts post-fs-data on any mismatch, so a tree that speaks a newer uapi
+ * than the installed manager cannot agree with it out of the box. Letting
+ * the reported value be raised at boot lets one kernel image pair with a
+ * newer manager without a rebuild, e.g. kernelsu.uapi_version=6.
+ */
+uint32_t uapi_version_override = 0;
+module_param_named(uapi_version, uapi_version_override, uint, 0444);
+MODULE_PARM_DESC(uapi_version,
+		 "Reported KernelSU UAPI version (0 = built-in value)");
 
 #define KSU_DRIVER_PERMISSION_SU_SESSION (1UL << 0)
 

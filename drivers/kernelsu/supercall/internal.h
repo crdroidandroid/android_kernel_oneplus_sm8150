@@ -17,5 +17,6 @@ void ksu_supercall_dump_commands(void);
 void ksu_supercall_cleanup_state(void);
 
 extern uint32_t ksuver_override;
+extern uint32_t uapi_version_override;
 
 #endif // __KSU_H_SUPERCALL_INTERNAL
