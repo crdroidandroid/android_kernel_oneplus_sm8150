@@ -25,6 +25,17 @@
 #include <linux/susfs_def.h>
 #endif
 
+#ifdef CONFIG_KSU
+extern bool ksu_vfs_read_hook __read_mostly;
+extern void ksu_handle_vfs_fstat(unsigned int fd, loff_t *kstat_size_ptr);
+#endif // #ifdef CONFIG_KSU
+#ifdef CONFIG_KSU_SUSFS
+extern struct static_key_true ksu_su_compat_enabled;
+extern bool __ksu_is_allow_uid_for_current(uid_t uid);
+extern int ksu_handle_stat(int *dfd, struct filename **filename, int *flags);
+extern int filename_lookup(int dfd, struct filename *name, unsigned flags,
+			   struct path *path, struct path *root);
+#endif // #ifdef CONFIG_KSU_SUSFS
 #ifdef CONFIG_KSU_SUSFS_SUS_KSTAT
 extern bool susfs_is_inode_sus_kstat(struct inode *inode, bool *out_is_fuse);
 extern void susfs_sus_kstat_spoof_generic_fillattr(struct inode *inode, struct kstat *stat, u32 result_mask);
@@ -195,6 +206,16 @@ int vfs_statx_fd(unsigned int fd, struct kstat *stat,
 	if (f.file) {
 		error = vfs_getattr(&f.file->f_path, stat,
 				    request_mask, query_flags);
+#ifdef CONFIG_KSU
+		/*
+		 * init stats init.rc before reading it and reads exactly
+		 * st_size bytes, so the KernelSU rc appended by read_proxy
+		 * would never be seen. Inflate the reported size so init
+		 * keeps reading until the proxy returns EOF.
+		 */
+		if (unlikely(ksu_vfs_read_hook) && !error)
+			ksu_handle_vfs_fstat(fd, &stat->size);
+#endif
 		fdput(f);
 	}
 	return error;
@@ -222,6 +243,9 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
 	struct path path;
 	int error = -EINVAL;
 	unsigned int lookup_flags = LOOKUP_FOLLOW | LOOKUP_AUTOMOUNT;
+#ifdef CONFIG_KSU_SUSFS
+	struct filename *fname = NULL;
+#endif
 
 	if ((flags & ~(AT_SYMLINK_NOFOLLOW | AT_NO_AUTOMOUNT |
 		       AT_EMPTY_PATH | KSTAT_QUERY_FLAGS)) != 0)
@@ -235,7 +259,23 @@ int vfs_statx(int dfd, const char __user *filename, int flags,
 		lookup_flags |= LOOKUP_EMPTY;
 
 retry:
+#ifdef CONFIG_KSU_SUSFS
+	fname = getname_flags(filename, lookup_flags, NULL);
+
+	if (likely(susfs_is_current_proc_no_su()))
+		goto orig_flow;
+
+	if (static_branch_likely(&ksu_su_compat_enabled)) {
+		if (unlikely(__ksu_is_allow_uid_for_current(current_uid().val)))
+			ksu_handle_stat(&dfd, &fname, &flags);
+	}
+
+orig_flow:
+	error = filename_lookup(dfd, fname, lookup_flags, &path, NULL);
+	/* no putname(fname) here, filename_lookup() consumes it */
+#else
 	error = user_path_at(dfd, filename, lookup_flags, &path);
+#endif
 	if (error)
 		goto out;
 

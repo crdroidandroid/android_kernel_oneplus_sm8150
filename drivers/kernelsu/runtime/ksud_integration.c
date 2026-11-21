@@ -992,6 +992,49 @@ static noinline void ksu_common_newfstat_ret(unsigned int fd_int, void **statbuf
 	return;
 }
 
+/*
+ * Called from vfs_statx_fd() with the kernel's own struct kstat, so init's
+ * fstat(init.rc) reports a size that includes the rc the read proxy appends.
+ * Without this init reads exactly st_size bytes, stops at EOF before the
+ * appended rc, and none of the ksud exec lines (post-fs-data, services,
+ * boot-completed) are ever parsed.
+ */
+void ksu_handle_vfs_fstat(unsigned int fd, loff_t *kstat_size_ptr)
+{
+	struct file *file;
+	char path[256];
+	char *dpath;
+
+	if (likely(!ksu_init_rc_hook))
+		return;
+
+	if (!is_init(current_cred()))
+		return;
+
+	/* init only opens init.rc once, and only as a regular file */
+	file = fget(fd);
+	if (!file)
+		return;
+
+	if (!d_is_reg(file->f_path.dentry)) {
+		fput(file);
+		return;
+	}
+
+	dpath = d_path(&file->f_path, path, sizeof(path));
+	if (IS_ERR(dpath) ||
+	    (strcmp(dpath, "/init.rc") && strcmp(dpath, "/system/etc/init/hw/init.rc"))) {
+		fput(file);
+		return;
+	}
+	fput(file);
+
+	load_module_rc_once();
+
+	*kstat_size_ptr += ksu_rc_len + module_rc_len;
+	pr_info("vfs_fstat: adding ksu_rc_len: %zu\n", ksu_rc_len + module_rc_len);
+}
+
 void ksu_handle_newfstat_ret(unsigned int *fd, struct stat __user **statbuf_ptr)
 {
 	if (likely(!ksu_vfs_read_hook))
