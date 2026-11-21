@@ -48,18 +48,25 @@
 #define SU_PATH "/system/bin/su"
 #define SH_PATH "/system/bin/sh"
 
-bool ksu_su_compat_enabled __read_mostly = true;
+/*
+ * A static key so that the hooks in fs/exec.c, fs/open.c and fs/stat.c can
+ * be patched out entirely when sucompat is disabled from the manager.
+ */
+DEFINE_STATIC_KEY_TRUE(ksu_su_compat_enabled);
 
 static int su_compat_feature_get(u64 *value)
 {
-	*value = ksu_su_compat_enabled ? 1 : 0;
+	*value = static_key_enabled(&ksu_su_compat_enabled) ? 1 : 0;
 	return 0;
 }
 
 static int su_compat_feature_set(u64 value)
 {
 	bool enable = value != 0;
-	ksu_su_compat_enabled = enable;
+	if (enable)
+		static_branch_enable(&ksu_su_compat_enabled);
+	else
+		static_branch_disable(&ksu_su_compat_enabled);
 	pr_info("su_compat: set to %d\n", enable);
 	return 0;
 }
@@ -90,7 +97,7 @@ int ksu_handle_faccessat_sucompat(int *dfd, const char __user **filename_user,
 {
 	const char su[] = SU_PATH;
 
-	if (!ksu_su_compat_enabled) {
+	if (!static_key_enabled(&ksu_su_compat_enabled)) {
 		return 0;
 	}
 
@@ -116,7 +123,7 @@ int ksu_handle_stat_sucompat(int *dfd, const char __user **filename_user, int *f
 	// const char sh[] = SH_PATH;
 	const char su[] = SU_PATH;
 
-	if (!ksu_su_compat_enabled){
+	if (!static_key_enabled(&ksu_su_compat_enabled)) {
 		return 0;
 	}
 
@@ -274,7 +281,7 @@ static long ksu_handle_execve_sucompat_common(const char __user **filename_user,
 	if (unlikely(!filename_user))
 		goto do_orig_execve;
 
-	if (!ksu_su_compat_enabled)
+	if (!static_key_enabled(&ksu_su_compat_enabled))
 		goto do_orig_execve;
 
 	if (!ksu_is_allow_uid_for_current(current_uid().val))
@@ -367,7 +374,7 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 	if (unlikely(!filename_ptr))
 		return -EINVAL;
 
-	if (!ksu_su_compat_enabled)
+	if (!static_key_enabled(&ksu_su_compat_enabled))
 		return -EINVAL;
 
 	if (!ksu_is_allow_uid_for_current(current_uid().val))

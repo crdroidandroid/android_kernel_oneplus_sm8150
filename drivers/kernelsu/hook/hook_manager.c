@@ -308,7 +308,7 @@ int ksu_handle_init_mark_tracker(const char __user **filename_user)
 static void ksu_sys_enter_handler(void *data, struct pt_regs *regs, long id)
 {
 	if (unlikely(check_syscall_fastpath(id))) {
-		if (ksu_su_compat_enabled) {
+		if (static_branch_likely(&ksu_su_compat_enabled)) {
 			// Handle newfstatat (y compatibilidad con arquitecturas híbridas)
 #ifdef __NR_fstatat64
 			if (id == __NR_newfstatat || id == __NR_fstatat64) {
