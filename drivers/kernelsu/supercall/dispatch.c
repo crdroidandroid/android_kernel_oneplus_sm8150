@@ -64,8 +64,13 @@ static int do_get_info(void __user *arg)
     if (ksu_late_loaded) {
         cmd.flags |= KSU_GET_INFO_FLAG_LATE_LOAD;
     }
+    /* A late load never sees PID 1's selinux_setup, so preinit cannot run. */
+    if (ksu_preinit_enabled_param() && !ksu_late_loaded) {
+        cmd.flags |= KSU_GET_INFO_FLAG_PREINIT;
+    }
     cmd.features = KSU_FEATURE_MAX;
-    cmd.uapi_version = KERNEL_SU_UAPI_VERSION;
+    cmd.uapi_version = uapi_version_override ? uapi_version_override
+                                             : KERNEL_SU_UAPI_VERSION;
 
     if (copy_to_user(arg, &cmd, sizeof(cmd))) {
         pr_err("get_version: copy_to_user failed\n");
@@ -1052,6 +1057,12 @@ static const struct ksu_ioctl_cmd_map ksu_ioctl_handlers[] = {
         .handler = do_disable_escape_to_root, 
         .perm_check = only_root,
         .allow_su_session = true
+    },
+    {
+        .cmd = KSU_IOCTL_LOOKUP_SYMBOLS,
+        .name = "LOOKUP_SYMBOLS",
+        .handler = do_lookup_symbols,
+        .perm_check = only_root
     },
     {
         .cmd = KSU_IOCTL_GET_HOOK_MODE,
