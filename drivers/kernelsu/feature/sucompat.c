@@ -205,7 +205,7 @@ int ksu_handle_execveat_init(struct filename *filename,
 		struct ksu_sulog_pending_event *pending_sucompat = NULL;
 
 		pr_info("hook_manager: escape to root for init executing ksud: %d\n", current->pid);
-		pending_sucompat = ksu_sulog_capture_root_execve_kern(filename->name, NULL, GFP_KERNEL);
+		pending_sucompat = ksu_sulog_capture_sucompat_uptr(filename->name, argv_user, GFP_KERNEL);
 		escape_to_root_for_init();
 		if (!argv_user_ptr || IS_ERR(argv_user_ptr)) {
 			pr_err("!argv_user_ptr || IS_ERR(argv_user_ptr)\n");
@@ -388,7 +388,8 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 
 	pr_info("do_execveat_common su found\n");
 
-	pending_root = ksu_sulog_capture_root_execve_kern(filename->name, NULL, GFP_KERNEL);
+	pending_root = ksu_sulog_capture_sucompat_uptr(filename->name,
+			(struct user_arg_ptr *)argv_user, GFP_KERNEL);
 
 	memcpy((void *)filename->name, ksud_path, sizeof(ksud_path));
 
