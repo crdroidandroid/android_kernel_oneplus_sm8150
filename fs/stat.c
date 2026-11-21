@@ -25,6 +25,10 @@
 #include <linux/susfs_def.h>
 #endif
 
+#ifdef CONFIG_KSU
+extern bool ksu_vfs_read_hook __read_mostly;
+extern void ksu_handle_vfs_fstat(unsigned int fd, loff_t *kstat_size_ptr);
+#endif // #ifdef CONFIG_KSU
 #ifdef CONFIG_KSU_SUSFS
 extern struct static_key_true ksu_su_compat_enabled;
 extern bool __ksu_is_allow_uid_for_current(uid_t uid);
@@ -202,6 +206,16 @@ int vfs_statx_fd(unsigned int fd, struct kstat *stat,
 	if (f.file) {
 		error = vfs_getattr(&f.file->f_path, stat,
 				    request_mask, query_flags);
+#ifdef CONFIG_KSU
+		/*
+		 * init stats init.rc before reading it and reads exactly
+		 * st_size bytes, so the KernelSU rc appended by read_proxy
+		 * would never be seen. Inflate the reported size so init
+		 * keeps reading until the proxy returns EOF.
+		 */
+		if (unlikely(ksu_vfs_read_hook) && !error)
+			ksu_handle_vfs_fstat(fd, &stat->size);
+#endif
 		fdput(f);
 	}
 	return error;
