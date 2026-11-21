@@ -377,18 +377,23 @@ int ksu_handle_execveat_sucompat(int *fd, struct filename **filename_ptr,
 	if (!static_key_enabled(&ksu_su_compat_enabled))
 		return -EINVAL;
 
-	if (!ksu_is_allow_uid_for_current(current_uid().val))
-		return -EINVAL;
-
 	filename = *filename_ptr;
 	if (IS_ERR(filename))
 		return -EINVAL;
 
 #ifdef CONFIG_KSU_SUSFS
+	/*
+	 * Must run before the allowlist check: init spawned processes (which
+	 * carry the adb root and the ksud bootstrap) are normally not in the
+	 * allowlist and would otherwise never be marked TIF_PROC_NO_SU.
+	 */
 	if (!ksu_handle_execveat_init(filename, (struct user_arg_ptr *)argv_user,
 				      (struct user_arg_ptr *)envp_user))
 		return -EINVAL;
 #endif
+
+	if (!ksu_is_allow_uid_for_current(current_uid().val))
+		return -EINVAL;
 
 	if (likely(memcmp(filename->name, su, sizeof(su))))
 		return -EINVAL;
