@@ -11,7 +11,14 @@
 // 4: add KSU_GET_INFO_FLAG_BUNDLED
 // 5: add EVENT_SERVICES with a start/skip result
 // 6: add KSU_IOCTL_LOOKUP_SYMBOLS and KSU_GET_INFO_FLAG_PREINIT; modules.rc and preinit may live under /metadata/vold/ksu
-#define KERNEL_SU_UAPI_VERSION 6
+//
+// Report 5: everything 6 added is purely additive (no existing struct or
+// ioctl changed), and the released KernelSU-Next manager is still uapi 5.
+// The manager warns when its own uapi is lower than the kernel's, and ksud
+// aborts post-fs-data on any mismatch, so advertising 6 strands every
+// released manager. Pair with uapi 6 by booting with
+// kernelsu.uapi_version=6 once a uapi-6 manager is installed.
+#define KERNEL_SU_UAPI_VERSION 5
 
 /* Magic numbers for reboot hook to install fd */
 #define KSU_INSTALL_MAGIC1 0xDEADBEEF
