@@ -76,6 +76,9 @@ static int handle_zygote_setresuid(uid_t ruid)
 	// Disable seccomp restriction for root allowed apps since running with "su"
 	// will disable seccomp anyway
 	if (ksu_is_allow_uid_for_current(ruid)) {
+		// A grant can be added after this process was already spawned, so
+		// drop the sticky sucompat opt out to keep "su" visible to it.
+		susfs_clear_current_proc_no_su();
 		disable_seccomp();
 		return 0;
 	}
@@ -128,6 +131,9 @@ static int handle_zygote_next_setresuid(uid_t ruid)
 	// Disable seccomp restriction for root allowed apps since running with "su"
 	// will disable seccomp anyway
 	if (ksu_is_allow_uid_for_current(ruid)) {
+		// A grant can be added after this process was already spawned, so
+		// drop the sticky sucompat opt out to keep "su" visible to it.
+		susfs_clear_current_proc_no_su();
 		disable_seccomp();
 		return 0;
 	}

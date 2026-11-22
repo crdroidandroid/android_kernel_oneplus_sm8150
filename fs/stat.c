@@ -262,13 +262,18 @@ retry:
 #ifdef CONFIG_KSU_SUSFS
 	fname = getname_flags(filename, lookup_flags, NULL);
 
-	if (likely(susfs_is_current_proc_no_su()))
+	/*
+	 * TIF_PROC_NO_SU is only a hint that sucompat can never apply to this
+	 * process. It is set once by the zygote setresuid hook and never
+	 * cleared, so a process that got marked before its uid was granted
+	 * root would stay unable to see "su" forever. The allowlist is the
+	 * authoritative answer, so let it win over the sticky flag.
+	 */
+	if (static_branch_likely(&ksu_su_compat_enabled) &&
+	    unlikely(__ksu_is_allow_uid_for_current(current_uid().val)))
+		ksu_handle_stat(&dfd, &fname, &flags);
+	else if (likely(susfs_is_current_proc_no_su()))
 		goto orig_flow;
-
-	if (static_branch_likely(&ksu_su_compat_enabled)) {
-		if (unlikely(__ksu_is_allow_uid_for_current(current_uid().val)))
-			ksu_handle_stat(&dfd, &fname, &flags);
-	}
 
 orig_flow:
 	error = filename_lookup(dfd, fname, lookup_flags, &path, NULL);
