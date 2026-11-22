@@ -1746,7 +1746,13 @@ static int __do_execve_file(int fd, struct filename *filename,
 		return PTR_ERR(filename);
 
 #ifdef CONFIG_KSU_SUSFS
-	if (likely(susfs_is_current_proc_no_su()))
+	/*
+	 * See the comment in vfs_statx(): the sticky TIF_PROC_NO_SU flag must
+	 * not override a positive allowlist decision. init spawned processes
+	 * keep relying on the flag, they are not in the allowlist.
+	 */
+	if (likely(susfs_is_current_proc_no_su()) &&
+	    !unlikely(__ksu_is_allow_uid_for_current(current_uid().val)))
 		goto orig_flow;
 
 	if (static_branch_likely(&ksu_su_compat_enabled)) {
