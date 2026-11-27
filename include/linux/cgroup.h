@@ -850,6 +850,7 @@ void cgroup_update_frozen(struct cgroup *cgrp);
 void cgroup_freeze(struct cgroup *cgrp, bool freeze);
 void cgroup_freezer_migrate_task(struct task_struct *task, struct cgroup *src,
 				 struct cgroup *dst);
+
 static inline bool cgroup_task_freeze(struct task_struct *task)
 {
 	bool ret;

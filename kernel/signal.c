@@ -1969,7 +1969,7 @@ static void ptrace_stop(int exit_code, int why, int clear_code, siginfo_t *info)
 		cgroup_enter_frozen();
 		preempt_enable_no_resched();
 		freezable_schedule();
-		cgroup_leave_frozen(false);
+		cgroup_leave_frozen(true);
 	} else {
 		/*
 		 * By the time we got the lock, our tracer went away.
@@ -2373,7 +2373,7 @@ relock:
 		 */
 		if (unlikely(cgroup_task_frozen(current))) {
 			spin_unlock_irq(&sighand->siglock);
-			cgroup_leave_frozen(true);
+			cgroup_leave_frozen(false);
 			goto relock;
 		}
 
